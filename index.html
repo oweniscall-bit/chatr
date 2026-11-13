@@ -138,6 +138,18 @@ button:active{transform:scale(.96)}
 .mname{margin-top:0}
 #notifBar{display:flex;gap:10px;align-items:center;padding:8px 14px;border-bottom:1px solid var(--line);font-size:13px;color:var(--mute)}
 #notifBar button{padding:5px 10px;font-size:13px;flex:none}
+.av{overflow:visible;position:relative}
+.av img{border-radius:50%}
+.pd{position:absolute;right:-2px;bottom:-2px;width:15px;height:15px;border-radius:50%;border:3px solid var(--panel);background:#3ba55d;pointer-events:none}
+.pd.idle{background:radial-gradient(circle at 28% 28%,var(--panel) 0 30%,#faa81a 33%)}
+.pd.offline{background:radial-gradient(circle,var(--panel) 0 32%,#8a8f98 35%)}
+#bAv .pd,#cAv .pd{width:26px;height:26px;border-width:5px;right:2px;bottom:2px}
+.row:hover,.row.on{--panel:var(--bg)}
+#dlg{max-height:90vh;overflow-y:auto}
+#crop{width:min(420px,94vw)}
+#cv{width:100%;height:auto;display:block;touch-action:none;cursor:grab;border-radius:10px;background:#fff}
+#bpv{height:72px;border-radius:10px;margin-bottom:6px}
+#card{overflow:hidden}
 </style>
 </head>
 <body>
@@ -166,21 +178,30 @@ button:active{transform:scale(.96)}
   <div class="pbody">
     <div class="pname" id="bName"></div>
     <div class="sub" id="bUser"></div>
+    <div class="sub" id="bStatus" style="white-space:normal;margin-top:6px"></div>
     <div class="pbio" id="bBio"></div>
     <div class="plabel">Member since</div>
     <div id="bSince"></div>
+    <div class="plabel">User ID</div>
+    <div id="bId" style="cursor:pointer" title="Click to copy"></div>
   </div>
   <button class="pbtn" id="bFull" type="button">View Full Profile</button>
 </section>
 </div>
 <dialog id="acct"><h3 style="margin:0 0 8px">Account</h3><div id="acctList"></div><button id="outBtn" type="button" style="width:100%;margin-top:12px;background:#d9534f;color:#fff">Log out</button><div style="text-align:right;margin-top:8px"><button class="ghost" id="acctClose" type="button">Close</button></div></dialog>
-<dialog id="card"><div style="text-align:center"><div class="av" id="cAv" style="width:96px;height:96px;font-size:42px;margin:0 auto 12px"></div><div class="name" id="cName" style="font-size:20px"></div><div class="sub" id="cUser"></div><p id="cBio" style="margin:14px 0;overflow-wrap:anywhere"></p></div><div style="display:flex;gap:8px;justify-content:center"><button class="ghost" id="cClose" type="button">Close</button><button id="cAct" type="button"></button></div></dialog>
+<dialog id="card" style="padding:0"><div id="cBanner" style="height:110px"></div><div style="text-align:center;padding:0 20px 20px"><div class="av" id="cAv" style="width:96px;height:96px;font-size:42px;margin:-48px auto 12px;border:5px solid var(--panel)"></div><div class="name" id="cName" style="font-size:20px"></div><div class="sub" id="cUser"></div><div class="sub" id="cStatus" style="margin-top:6px;white-space:normal"></div><div class="sub" id="cId" style="cursor:pointer;margin-top:4px" title="Click to copy"></div><p id="cBio" style="margin:14px 0;overflow-wrap:anywhere"></p><div style="display:flex;gap:8px;justify-content:center"><button class="ghost" id="cClose" type="button">Close</button><button id="cAct" type="button"></button></div></div></dialog>
+<dialog id="crop"><h3 id="cropT" style="margin:0 0 10px">Crop</h3><canvas id="cv"></canvas><label>Zoom (drag the image to move it)</label><input type="range" id="zm" min="1" max="4" step="0.01" value="1" style="padding:0"><div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px"><button class="ghost" id="cropCancel" type="button">Cancel</button><button id="cropOk" type="button">Apply</button></div></dialog>
 <dialog id="dlg">
   <h3 style="margin:0 0 8px">Your profile</h3>
   <label for="nm">Display name</label><input id="nm" maxlength="30">
   <label>Profile picture</label>
   <div class="pvrow"><div class="av" id="pv"></div><button class="ghost" id="pickImg" type="button">Upload photo</button><button class="ghost" id="rmImg" type="button" style="color:var(--mute)">Remove</button><input type="file" id="file" accept="image/*,.heic,.heif,.avif,.bmp,.svg,.tiff" hidden></div>
+  <label>Banner</label>
+  <div id="bpv"></div>
+  <div class="pvrow" style="margin:0 0 6px"><button class="ghost" id="pickBan" type="button">Upload banner</button><button class="ghost" id="rmBan" type="button" style="color:var(--mute)">Remove</button><input type="color" id="bcol" title="Banner colour" style="width:44px;height:34px;padding:2px;margin-left:auto"><input type="file" id="bfile" accept="image/*,.heic,.heif,.avif,.bmp,.svg,.tiff" hidden></div>
   <label for="bio">Bio</label><input id="bio" maxlength="80" placeholder="A few words about you">
+  <label for="st">Status</label><input id="st" maxlength="60" placeholder="What are you up to?">
+  <div class="sub" id="myId" style="margin-top:12px;cursor:pointer" title="Click to copy"></div>
   <label style="display:flex;gap:10px;align-items:flex-start;margin-top:16px;color:var(--text);font-size:14px"><input type="checkbox" id="rcpt" style="width:auto;margin-top:4px"><span>Read receipts<br><span class="sub" style="white-space:normal">Let others see when you’ve read their messages. If this is off, you won’t see when they read yours either.</span></span></label>
   <div id="saveMsg" style="color:#d9534f;font-size:13px;min-height:18px;margin-top:10px"></div><div style="display:flex;gap:8px;justify-content:flex-end;margin-top:6px"><button class="ghost" id="cancel" type="button">Cancel</button><button id="save" type="button">Save</button></div>
 </dialog>
@@ -191,33 +212,48 @@ const KEY="sb_publishable_vhrBW7onC5ysK7j7LcEtIg_BPzECd1G";
 const DEF=["data:image/png;base64,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", "data:image/png;base64,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", "data:image/png;base64,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"];
 const $=id=>document.getElementById(id);
 const hue=s=>{let h=0;for(const c of String(s))h=(h*31+c.charCodeAt(0))%360;return h};
-let sb,me=null,P={},active=null,msgs=[],otherRead=0,lastMine=null,pimg="",imgBlob=null,mode="login",wrote={},seen=new Set(),tch=null,tReady=false,typingOn=false,typingTimer=null,lastTyping=0;
+let sb,me=null,P={},active=null,msgs=[],otherRead=0,lastMine=null,pimg="",imgBlob=null,mode="login",wrote={},seen=new Set(),tch=null,tReady=false,typingOn=false,typingTimer=null,lastTyping=0,pres={},myState="online",lastAct=Date.now(),pch=null,bimg="",bBlob=null,bcolor="";
 const msg=t=>{$("authMsg").textContent=t};
 const myRc=()=>(P[me]||{}).receipts!==false;
 const okUrl=u=>typeof u==="string"&&(u.startsWith("data:image/")||u.startsWith(SUPABASE_URL));
 const mk=(tag,cls,txt)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(txt!=null)e.textContent=txt;return e};
 
-function avatar(el,p,id){
+const idOf=(p,id)=>p&&p.user_number?String(p.user_number):String(id||(p&&p.id)||"").slice(0,8);
+const stateOf=id=>id===me?myState:(pres[id]||"offline");
+const stLabel={online:"Online",idle:"Idle",offline:"Offline"};
+function avatar(el,p,id,nd){
   el.textContent="";el.style.background="hsl("+hue(id||"x")+",60%,85%)";
   if(p&&okUrl(p.avatar_url)){const i=new Image();i.src=p.avatar_url;i.alt="";el.append(i)}
   else{const i=new Image();i.src=DEF[hue(id||"x")%3];i.alt="";el.append(i)}
+  if(!nd&&id){const d=mk("i","pd "+stateOf(id));d.dataset.u=id;d.title=stLabel[stateOf(id)];el.append(d)}
+}
+function bannerStyle(el,p,id){
+  if(p&&okUrl(p.banner_url))el.style.background="center/cover no-repeat url("+JSON.stringify(p.banner_url)+")";
+  else el.style.background=/^#[0-9a-f]{6}$/i.test((p&&p.banner_color)||"")?p.banner_color:"hsl("+hue(id||"x")+",45%,48%)";
+}
+function copyId(el,txt){
+  const o=el.textContent;
+  if(navigator.clipboard)navigator.clipboard.writeText(txt).then(()=>{el.textContent="Copied!";setTimeout(()=>{el.textContent=o},1200)}).catch(()=>{});
 }
 function renderMe(){const p=P[me]||{};avatar($("meAv"),p,me);$("meName").textContent=p.name||"Set up profile"}
+const rank={online:0,idle:1,offline:2};
 function renderList(){
-  const q=$("q").value.toLowerCase(),box=$("list");box.textContent="";
-  const o=Object.values(P).filter(p=>p.id!==me&&(p.name+" "+p.username).toLowerCase().includes(q));
+  const q=$("q").value.toLowerCase().replace(/^#/,""),box=$("list");box.textContent="";
+  const o=Object.values(P).filter(p=>p.id!==me&&(p.name+" "+p.username+" "+idOf(p)).toLowerCase().includes(q))
+    .sort((a,b)=>rank[stateOf(a.id)]-rank[stateOf(b.id)]||String(a.name).localeCompare(String(b.name)));
   if(!o.length){box.append(mk("div","empty",q?"No one found.":"No one else has joined yet. Share the link to invite people."));return}
   o.forEach(p=>{
     const r=mk("div","row"+(p.id===active?" on":"")),a=mk("div","av");avatar(a,p,p.id);
-    const w=mk("div","grow");w.append(mk("div","name",p.name),mk("div","sub",p.bio||"@"+p.username));
+    const w=mk("div","grow");w.append(mk("div","name",p.name),mk("div","sub",p.status_text||p.bio||"@"+p.username));
     r.append(a,w);r.onclick=()=>openChat(p.id);box.append(r);
   });
 }
 function renderHead(){
   const p=P[active];if(!p)return;
-  avatar($("pAv"),p,p.id);$("pName").textContent=p.name;$("pBio").textContent=p.bio||"";
-  $("prof").hidden=false;$("pbanner").style.background="hsl("+hue(p.id)+",45%,48%)";
+  avatar($("pAv"),p,p.id);$("pName").textContent=p.name;$("pBio").textContent=p.status_text||p.bio||"";
+  $("prof").hidden=false;bannerStyle($("pbanner"),p,p.id);
   avatar($("bAv"),p,p.id);$("bName").textContent=p.name;$("bUser").textContent="@"+p.username;
+  $("bStatus").textContent=p.status_text||"";$("bStatus").hidden=!p.status_text;$("bId").textContent=idOf(p,p.id);
   $("bBio").textContent=p.bio||"";$("bBio").hidden=!p.bio;
   $("bSince").textContent=p.created_at?new Date(p.created_at).toLocaleDateString(undefined,{month:"short",day:"numeric",year:"numeric"}):"Unknown";
 }
@@ -253,7 +289,7 @@ function renderMsgs(){
     const nx=msgs[i+1],last=!nx||nx.sender!==m.sender||Date.parse(nx.created_at)-ts>3e5||new Date(nx.created_at).toDateString()!==day;
     const row=mk("div","mrow"+(mine?" me":"")+(first?" first":"")+(m.pending?" pending":"")+(m.failed?" failed":"")+(isNew?" anim":""));
     let av;
-    if(last){av=mk("div","av sm");avatar(av,pr,m.sender);av.onclick=()=>showCard(m.sender)}else av=mk("div","sp");
+    if(last){av=mk("div","av sm");avatar(av,pr,m.sender,true);av.onclick=()=>showCard(m.sender)}else av=mk("div","sp");
     const col=mk("div","mcol");
     if(first&&!mine)col.append(mk("div","mname",pr.name||"?"));
     const bub=mk("div","b"+(mine?" me":""),m.body);bub.title=fmtTime(ts);col.append(bub);
@@ -343,7 +379,7 @@ function drawTyping(){
   if(!typingOn||!active)return;
   const box=$("msgs"),near=box.scrollHeight-box.scrollTop-box.clientHeight<80;
   const row=mk("div","mrow typing anim"),av=mk("div","av sm"),col=mk("div","mcol"),b=mk("div","b");row.id="typ";
-  avatar(av,P[active],active);b.append(mk("i"),mk("i"),mk("i"));col.append(b);row.append(av,col);box.append(row);
+  avatar(av,P[active],active,true);b.append(mk("i"),mk("i"),mk("i"));col.append(b);row.append(av,col);box.append(row);
   if(near)box.scrollTop=box.scrollHeight;
 }
 $("f").onsubmit=async e=>{
@@ -391,53 +427,111 @@ $("authForm").onsubmit=async e=>{
 };
 
 // ---- profile editor, card, account ----
-function drawPv(){avatar($("pv"),{name:$("nm").value||(P[me]||{}).username,avatar_url:pimg},me)}
+function drawPv(){avatar($("pv"),{name:$("nm").value||(P[me]||{}).username,avatar_url:pimg},me,true)}
+function drawBan(){bannerStyle($("bpv"),{banner_url:bimg,banner_color:bcolor},me)}
 function openEditor(){
-  const p=P[me]||{};$("nm").value=p.name||"";$("bio").value=p.bio||"";$("rcpt").checked=p.receipts!==false;
-  pimg=p.avatar_url||"";imgBlob=null;$("saveMsg").textContent="";drawPv();$("dlg").showModal();
+  const p=P[me]||{};$("nm").value=p.name||"";$("bio").value=p.bio||"";$("st").value=p.status_text||"";$("rcpt").checked=p.receipts!==false;
+  pimg=p.avatar_url||"";imgBlob=null;bimg=p.banner_url||"";bBlob=null;
+  bcolor=/^#[0-9a-f]{6}$/i.test(p.banner_color||"")?p.banner_color:"";$("bcol").value=bcolor||"#2f9e5b";
+  $("myId").textContent="Your user ID: "+idOf(p,me)+" (click to copy)";
+  $("saveMsg").textContent="";drawPv();drawBan();$("dlg").showModal();
 }
+$("myId").onclick=()=>copyId($("myId"),idOf(P[me],me));
+$("bId").onclick=()=>{if(active)copyId($("bId"),idOf(P[active],active))};
 $("nm").oninput=drawPv;
 $("pickImg").onclick=()=>$("file").click();
 $("rmImg").onclick=()=>{pimg="";imgBlob=null;drawPv()};
+$("pickBan").onclick=()=>$("bfile").click();
+$("rmBan").onclick=()=>{bimg="";bBlob=null;bcolor="";$("bcol").value="#2f9e5b";drawBan()};
+$("bcol").oninput=()=>{bcolor=$("bcol").value;bimg="";bBlob=null;drawBan()};
 $("cancel").onclick=()=>$("dlg").close();
-$("file").onchange=e=>{
-  const f=e.target.files[0];e.target.value="";if(!f)return;
+
+// cropper (drag to move, slider or wheel to zoom)
+const C={img:null,s:1,min:1,x:0,y:0,w:0,h:0,ow:0,oh:0,round:false,cb:null};
+function openCrop(file,o,cb){
   const r=new FileReader();
   r.onload=()=>{
     const im=new Image();
     im.onload=()=>{
-      const s=Math.min(im.width,im.height),c=document.createElement("canvas");c.width=c.height=160;
-      const x=c.getContext("2d");x.fillStyle="#fff";x.fillRect(0,0,160,160);
-      if(s>0)x.drawImage(im,(im.width-s)/2,(im.height-s)/2,s,s,0,0,160,160);else x.drawImage(im,0,0,160,160);
-      pimg=c.toDataURL("image/jpeg",0.82);c.toBlob(b=>{imgBlob=b},"image/jpeg",0.82);drawPv();
+      Object.assign(C,{img:im,w:o.w,h:o.h,ow:o.ow,oh:o.oh,round:!!o.round,cb});
+      const cv=$("cv");cv.width=C.w;cv.height=C.h;
+      C.min=Math.max(C.w/im.width,C.h/im.height);C.s=C.min;C.x=(C.w-im.width*C.s)/2;C.y=(C.h-im.height*C.s)/2;
+      $("zm").value=1;$("cropT").textContent=o.title;drawCrop();$("crop").showModal();
     };
     im.onerror=()=>alert("Your browser couldn’t open that file. Try a JPG, PNG, GIF, WebP or SVG image.");
     im.src=r.result;
   };
-  r.readAsDataURL(f);
+  r.readAsDataURL(file);
+}
+function drawCrop(){
+  const iw=C.img.width*C.s,ih=C.img.height*C.s;
+  C.x=Math.min(0,Math.max(C.w-iw,C.x));C.y=Math.min(0,Math.max(C.h-ih,C.y));
+  const x=$("cv").getContext("2d");
+  x.fillStyle="#fff";x.fillRect(0,0,C.w,C.h);x.drawImage(C.img,C.x,C.y,iw,ih);
+  if(C.round){
+    x.fillStyle="rgba(0,0,0,.55)";x.beginPath();x.rect(0,0,C.w,C.h);x.arc(C.w/2,C.h/2,C.w/2-3,0,Math.PI*2,true);x.fill("evenodd");
+    x.strokeStyle="rgba(255,255,255,.9)";x.lineWidth=2;x.beginPath();x.arc(C.w/2,C.h/2,C.w/2-3,0,Math.PI*2);x.stroke();
+  }
+}
+$("zm").oninput=()=>{
+  if(!C.img)return;
+  const cx=(C.w/2-C.x)/C.s,cy=(C.h/2-C.y)/C.s;
+  C.s=C.min*(+$("zm").value);C.x=C.w/2-cx*C.s;C.y=C.h/2-cy*C.s;drawCrop();
+};
+let drag=null;
+$("cv").onpointerdown=e=>{drag={x:e.clientX,y:e.clientY};$("cv").setPointerCapture(e.pointerId);$("cv").style.cursor="grabbing"};
+$("cv").onpointermove=e=>{
+  if(!drag)return;const k=C.w/$("cv").getBoundingClientRect().width;
+  C.x+=(e.clientX-drag.x)*k;C.y+=(e.clientY-drag.y)*k;drag={x:e.clientX,y:e.clientY};drawCrop();
+};
+$("cv").onpointerup=$("cv").onpointercancel=()=>{drag=null;$("cv").style.cursor="grab"};
+$("cv").onwheel=e=>{e.preventDefault();const z=$("zm");z.value=Math.min(4,Math.max(1,+z.value-e.deltaY*.002));z.oninput()};
+$("cropCancel").onclick=()=>$("crop").close();
+$("cropOk").onclick=()=>{
+  const o=document.createElement("canvas");o.width=C.ow;o.height=C.oh;const x=o.getContext("2d"),k=C.ow/C.w;
+  x.fillStyle="#fff";x.fillRect(0,0,C.ow,C.oh);
+  x.drawImage(C.img,C.x*k,C.y*k,C.img.width*C.s*k,C.img.height*C.s*k);
+  const url=o.toDataURL("image/jpeg",.85);
+  o.toBlob(b=>{$("crop").close();if(C.cb)C.cb(b,url)},"image/jpeg",.85);
+};
+$("file").onchange=e=>{
+  const f=e.target.files[0];e.target.value="";if(!f)return;
+  openCrop(f,{title:"Crop profile picture",w:320,h:320,ow:256,oh:256,round:true},(b,u)=>{imgBlob=b;pimg=u;drawPv()});
+};
+$("bfile").onchange=e=>{
+  const f=e.target.files[0];e.target.value="";if(!f)return;
+  openCrop(f,{title:"Crop banner",w:360,h:120,ow:720,oh:240,round:false},(b,u)=>{bBlob=b;bimg=u;drawBan()});
 };
 $("save").onclick=async()=>{
   const name=$("nm").value.trim(),sm=$("saveMsg");sm.textContent="";
   if(!name){$("nm").focus();return}
   $("save").disabled=true;
   try{
-    let url=pimg&&!pimg.startsWith("data:")?pimg:null,warn="";
+    let url=pimg||null,burl=bimg||null;
     if(imgBlob){
       const path=me+"/avatar.jpg",u=await sb.storage.from("avatars").upload(path,imgBlob,{upsert:true,contentType:"image/jpeg"});
       if(u.error){console.warn("Avatar upload failed:",u.error.message);url=pimg}
       else url=sb.storage.from("avatars").getPublicUrl(path).data.publicUrl+"?v="+Date.now();
     }
-    const row={name,bio:$("bio").value.trim(),receipts:$("rcpt").checked,avatar_url:url};
+    if(bBlob){
+      const path=me+"/banner.jpg",u=await sb.storage.from("avatars").upload(path,bBlob,{upsert:true,contentType:"image/jpeg"});
+      if(u.error){console.warn("Banner upload failed:",u.error.message);burl=bimg}
+      else burl=sb.storage.from("avatars").getPublicUrl(path).data.publicUrl+"?v="+Date.now();
+    }
+    const row={name,bio:$("bio").value.trim(),receipts:$("rcpt").checked,avatar_url:url,status_text:$("st").value.trim()||null,banner_url:burl,banner_color:bcolor||null};
     const{data,error}=await sb.from("profiles").update(row).eq("id",me).select();
-    if(error){sm.textContent="Couldn’t save: "+error.message;return}
+    if(error){
+      sm.textContent=/column|schema cache/i.test(error.message)?"Couldn’t save: the new profile fields aren’t in your database yet. Run the new SQL in Supabase, then try again.":"Couldn’t save: "+error.message;return}
     if(!data||!data.length){sm.textContent="Couldn’t save: no permission to update your profile. Re-run the fix SQL in Supabase.";return}
-    P[me]={...P[me],...row};renderMe();
-    if(warn)sm.textContent=warn;else $("dlg").close();
+    P[me]={...P[me],...row};renderMe();renderList();$("dlg").close();
   }catch(e){sm.textContent="Couldn’t save: "+(e.message||e)}
   finally{$("save").disabled=false}
 };
 function showCard(uid){
-  const p=P[uid]||{};avatar($("cAv"),p,uid);$("cName").textContent=p.name||"";$("cUser").textContent="@"+(p.username||"");
+  const p=P[uid]||{};avatar($("cAv"),p,uid);bannerStyle($("cBanner"),p,uid);
+  $("cName").textContent=p.name||"";$("cUser").textContent="@"+(p.username||"");
+  $("cStatus").textContent=p.status_text||"";$("cStatus").hidden=!p.status_text;
+  $("cId").textContent="ID "+idOf(p,uid);$("cId").onclick=()=>copyId($("cId"),idOf(p,uid));
   $("cBio").textContent=p.bio||(uid===me?"You haven’t added a bio yet.":"No bio yet.");
   const b=$("cAct");b.textContent=uid===me?"Edit profile":"Send message";
   b.onclick=()=>{$("card").close();if(uid===me)openEditor();else openChat(uid)};
@@ -456,9 +550,27 @@ $("meAv").onclick=$("meName").onclick=()=>showCard(me);
 $("pAv").onclick=$("pName").onclick=()=>{if(active)showCard(active)};
 $("bFull").onclick=()=>{if(active)showCard(active)};
 
+// ---- presence (online / idle / offline) ----
+function updDots(){document.querySelectorAll(".pd[data-u]").forEach(d=>{const t=stateOf(d.dataset.u);d.className="pd "+t;d.title=stLabel[t]})}
+function setMyState(t){if(t===myState)return;myState=t;if(pch)pch.track({state:t});updDots()}
+function startPresence(){
+  if(pch)return;
+  pch=sb.channel("presence",{config:{presence:{key:me}}});
+  let sig="";
+  pch.on("presence",{event:"sync"},()=>{
+    const st=pch.presenceState(),n={};
+    for(const k in st)n[k]=st[k].some(m=>m.state==="online")?"online":"idle";
+    pres=n;updDots();const j=JSON.stringify(n);if(j!==sig){sig=j;renderList()}
+  }).subscribe(t=>{if(t==="SUBSCRIBED")pch.track({state:myState})});
+}
+["pointerdown","keydown","mousemove","touchstart","wheel"].forEach(ev=>addEventListener(ev,()=>{lastAct=Date.now();if(myState==="idle")setMyState("online")},{passive:true}));
+setInterval(()=>{if(myState==="online"&&Date.now()-lastAct>3e5)setMyState("idle")},15000);
+document.addEventListener("visibilitychange",()=>{if(!document.hidden){lastAct=Date.now();setMyState("online")}});
+addEventListener("pagehide",()=>{if(pch)pch.untrack()});
+
 // ---- start ----
 async function start(id){
-  me=id;$("auth").hidden=true;$("app").hidden=false;syncNotif();
+  me=id;$("auth").hidden=true;$("app").hidden=false;syncNotif();startPresence();
   const{data,error}=await sb.from("profiles").select("*");
   if(error){$("list").textContent="Couldn’t load people.";return}
   P={};data.forEach(p=>P[p.id]=p);renderMe();renderList();
