@@ -84,7 +84,7 @@ body{background:linear-gradient(135deg,var(--g1),var(--g2)) fixed}
 <div id="auth" hidden><div class="card">
   <h2 style="margin:0 0 4px">Chatterbox</h2>
   <div class="sub" id="authTitle" style="margin-bottom:14px">Log in to your account</div>
-  <form id="authForm"><input id="ae" type="email" placeholder="Email" autocomplete="email"><input id="au" placeholder="Username (sign up only)" autocomplete="username" maxlength="20" hidden><input id="ap" type="password" placeholder="Password" autocomplete="current-password"><div id="authMsg"></div><button id="authBtn">Log in</button></form>
+  <form id="authForm"><input id="au" placeholder="Username" autocomplete="username" maxlength="20"><input id="ap" type="password" placeholder="Password" autocomplete="current-password"><div id="authMsg"></div><button id="authBtn">Log in</button></form>
   <div style="text-align:center;margin-top:10px"><button class="ghost" id="toggle" type="button">New here? Create an account</button></div>
   <div style="text-align:center"><button class="ghost" id="cancelAdd" type="button" hidden style="color:var(--mute)">Cancel</button></div>
 </div></div>
@@ -213,7 +213,7 @@ $("back").onclick=()=>$("app").classList.remove("chat");
 
 // ---- auth ----
 $("toggle").onclick=()=>{
-  mode=mode==="login"?"register":"login";msg("");$("au").hidden=mode==="login";
+  mode=mode==="login"?"register":"login";msg("");
   $("authTitle").textContent=mode==="login"?"Log in to your account":"Create your account";
   $("authBtn").textContent=mode==="login"?"Log in":"Sign up";
   $("toggle").textContent=mode==="login"?"New here? Create an account":"Have an account? Log in";
@@ -221,19 +221,19 @@ $("toggle").onclick=()=>{
 };
 $("authForm").onsubmit=async e=>{
   e.preventDefault();msg("");
-  const email=$("ae").value.trim(),pw=$("ap").value,un=$("au").value.trim().toLowerCase();
-  if(mode==="register"&&!/^[a-z0-9_]{3,20}$/.test(un))return msg("Username: 3–20 letters, numbers or underscores.");
+  const pw=$("ap").value,un=$("au").value.trim().toLowerCase(),email=un+"@users.chatterbox.app";
+  if(!/^[a-z0-9_]{3,20}$/.test(un))return msg("Username: 3–20 letters, numbers or underscores.");
   if(pw.length<6)return msg("Password must be at least 6 characters.");
   $("authBtn").disabled=true;
   try{
     if(mode==="register"){
       const{data,error}=await sb.auth.signUp({email,password:pw,options:{data:{username:un}}});
-      if(error)return msg(/database/i.test(error.message)?"That username may already be taken.":error.message);
-      if(!data.session)return msg("Almost done! Check your email to confirm, then log in.");
+      if(error)return msg(/database|already/i.test(error.message)?"That username is taken.":error.message);
+      if(!data.session)return msg("Account created, but Confirm email is still on in Supabase. Turn it off, then log in.");
       start(data.user.id);
     }else{
       const{data,error}=await sb.auth.signInWithPassword({email,password:pw});
-      if(error)return msg(error.message);
+      if(error)return msg(/invalid/i.test(error.message)?"Wrong username or password.":error.message);
       start(data.user.id);
     }
   }catch(err){msg("Something went wrong. Please try again.")}
