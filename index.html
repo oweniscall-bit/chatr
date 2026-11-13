@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Chatterbox</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap">
+<style>
+:root{--bg:#f6f5f2;--panel:#fff;--text:#1d1d1b;--mute:#76746e;--line:#e4e2dc;--accent:#5b5bd6;--mine:#5b5bd6;--mineText:#fff;--theirs:#ecebe6;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#161615;--panel:#1f1f1d;--text:#efeeea;--mute:#9a988f;--line:#333330;--accent:#8b8bf0;--mine:#6b6be0;--theirs:#2d2d2a;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#161615;--panel:#1f1f1d;--text:#efeeea;--mute:#9a988f;--line:#333330;--accent:#8b8bf0;--mine:#6b6be0;--theirs:#2d2d2a;color-scheme:dark}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--text);font:15px/1.4 "Nunito",system-ui,-apple-system,"Segoe UI",sans-serif}
+#app{display:flex;height:100%}
+aside{width:300px;background:var(--panel);border-right:1px solid var(--line);display:flex;flex-direction:column}
+main{flex:1;display:flex;flex-direction:column;min-width:0}
+.top{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--line);background:var(--panel)}
+.av{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;font-size:19px;flex:none}
+.grow{flex:1;min-width:0}
+.name{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sub{color:var(--mute);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+input,textarea,button{font:inherit;color:inherit}
+input,textarea{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:9px 12px;width:100%}
+input:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:-1px}
+button{cursor:pointer;border:0;border-radius:10px;padding:9px 14px;background:var(--accent);color:#fff;font-weight:600}
+button.ghost{background:transparent;color:var(--accent);padding:6px 10px}
+.search{padding:10px 14px}
+#list{overflow-y:auto;flex:1}
+.row{display:flex;gap:10px;align-items:center;padding:10px 14px;cursor:pointer}
+.row:hover,.row.on{background:var(--bg)}
+#msgs{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:6px}
+.b{max-width:75%;padding:8px 12px;border-radius:16px;background:var(--theirs);align-self:flex-start;overflow-wrap:anywhere;white-space:pre-wrap}
+.b.me{background:var(--mine);color:var(--mineText);align-self:flex-end}
+.t{font-size:11px;color:var(--mute);margin:0 6px;align-self:flex-start}
+.t.me{align-self:flex-end}
+form{display:flex;gap:8px;padding:12px 14px;border-top:1px solid var(--line);background:var(--panel)}
+.empty{margin:auto;color:var(--mute);text-align:center;padding:20px}
+dialog{border:1px solid var(--line);border-radius:16px;background:var(--panel);color:var(--text);width:min(400px,92vw);padding:20px}
+dialog::backdrop{background:rgba(0,0,0,.45)}
+.emojis{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 12px}
+.emojis span{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;font-size:20px;cursor:pointer;border:2px solid transparent}
+.emojis span.sel{border-color:var(--accent)}
+label{font-size:13px;color:var(--mute);display:block;margin:10px 0 4px}
+#back{display:none}
+@media(max-width:640px){aside{width:100%}main{display:none}#app.chat aside{display:none}#app.chat main{display:flex}#back{display:inline-block}}
+[hidden]{display:none!important}
+.av{overflow:hidden;font-weight:700}
+:root{--g1:#eaf6ec;--g2:#a8d8b4;--bg:#eef7ef;--theirs:#e0eee3;--line:#cfe2d3;--accent:#2f9e5b;--mine:#2f9e5b}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--g1:#0b1d12;--g2:#1f6b3a;--bg:#10231a;--panel:#13261b;--theirs:#223a2b;--line:#2b4636;--mute:#8fb09c;--accent:#3fb36d;--mine:#2d8f58}}
+:root[data-theme="dark"]{--g1:#0b1d12;--g2:#1f6b3a;--bg:#10231a;--panel:#13261b;--theirs:#223a2b;--line:#2b4636;--mute:#8fb09c;--accent:#3fb36d;--mine:#2d8f58}
+body{background:linear-gradient(135deg,var(--g1),var(--g2)) fixed}
+#meAv,#meName,#pAv,#pName{cursor:pointer}
+#prof{width:300px;background:var(--panel);border-left:1px solid var(--line);display:flex;flex-direction:column;overflow-y:auto}
+.banner{height:100px;flex:none}
+.pavwrap{padding:0 16px;margin-top:-46px}
+#bAv{width:92px;height:92px;font-size:40px;border:6px solid var(--panel)}
+.pbody{padding:12px 16px;flex:1}
+.pname{font-size:22px;font-weight:700;overflow-wrap:anywhere}
+.pbio{margin-top:14px;overflow-wrap:anywhere}
+.plabel{font-weight:700;font-size:13px;margin:18px 0 4px}
+.pbtn{margin:16px;background:var(--bg);color:var(--text);border:1px solid var(--line)}
+.mrow{display:flex;gap:8px;align-items:flex-end;max-width:88%}
+.mrow.me{flex-direction:row-reverse;align-self:flex-end}
+.mcol{display:flex;flex-direction:column;min-width:0}
+.mrow.me .mcol{align-items:flex-end}
+.b{max-width:100%}
+.av.sm{width:32px;height:32px;font-size:14px;cursor:pointer}
+.mname{font-size:12px;color:var(--mute);margin:0 6px 2px}
+.t.rd{color:var(--accent);font-weight:600}
+@media(max-width:1000px){#prof{display:none!important}}
+.av img{width:100%;height:100%;object-fit:cover;display:block}
+.pvrow{display:flex;align-items:center;gap:12px;margin:6px 0 12px}
+#pv{width:64px;height:64px;font-size:30px}
+#auth{position:fixed;inset:0;display:grid;place-items:center;background:linear-gradient(135deg,var(--g1),var(--g2));padding:20px;z-index:5}
+#auth .card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:24px;width:min(360px,100%)}
+#authForm{display:block;border:0;padding:0;background:none}
+#authForm input{margin-bottom:10px}
+#authForm button{width:100%}
+#authMsg{color:#d9534f;min-height:20px;font-size:13px;margin:4px 0}
+</style>
+</head>
+<body>
+<div id="auth" hidden><div class="card">
+  <h2 style="margin:0 0 4px">Chatterbox</h2>
+  <div class="sub" id="authTitle" style="margin-bottom:14px">Log in to your account</div>
+  <form id="authForm"><input id="ae" type="email" placeholder="Email" autocomplete="email"><input id="au" placeholder="Username (sign up only)" autocomplete="username" maxlength="20" hidden><input id="ap" type="password" placeholder="Password" autocomplete="current-password"><div id="authMsg"></div><button id="authBtn">Log in</button></form>
+  <div style="text-align:center;margin-top:10px"><button class="ghost" id="toggle" type="button">New here? Create an account</button></div>
+  <div style="text-align:center"><button class="ghost" id="cancelAdd" type="button" hidden style="color:var(--mute)">Cancel</button></div>
+</div></div>
+<div id="app" hidden>
+<aside>
+  <div class="top"><div class="av" id="meAv"></div><div class="grow"><div class="name" id="meName">…</div><div class="sub">Your profile</div></div><button class="ghost" id="editBtn">Edit</button><button class="ghost" id="acctBtn">Account</button></div>
+  <div class="search"><input id="q" placeholder="Search people" autocomplete="off"></div>
+  <div id="list"><div class="empty">Loading…</div></div>
+</aside>
+<main>
+  <div class="top" id="chatTop" hidden><button class="ghost" id="back">←</button><div class="av" id="pAv"></div><div class="grow"><div class="name" id="pName"></div><div class="sub" id="pBio"></div></div></div>
+  <div id="msgs"><div class="empty">Pick someone from the list to start a conversation.</div></div>
+  <form id="f" hidden><textarea id="in" rows="1" placeholder="Write a message…" style="resize:none"></textarea><button>Send</button></form>
+</main>
+<section id="prof" hidden>
+  <div class="banner" id="pbanner"></div>
+  <div class="pavwrap"><div class="av" id="bAv"></div></div>
+  <div class="pbody">
+    <div class="pname" id="bName"></div>
+    <div class="sub" id="bUser"></div>
+    <div class="pbio" id="bBio"></div>
+    <div class="plabel">Member since</div>
+    <div id="bSince"></div>
+  </div>
+  <button class="pbtn" id="bFull" type="button">View Full Profile</button>
+</section>
+</div>
+<dialog id="acct"><h3 style="margin:0 0 8px">Account</h3><div id="acctList"></div><button id="outBtn" type="button" style="width:100%;margin-top:12px;background:#d9534f;color:#fff">Log out</button><div style="text-align:right;margin-top:8px"><button class="ghost" id="acctClose" type="button">Close</button></div></dialog>
+<dialog id="card"><div style="text-align:center"><div class="av" id="cAv" style="width:96px;height:96px;font-size:42px;margin:0 auto 12px"></div><div class="name" id="cName" style="font-size:20px"></div><div class="sub" id="cUser"></div><p id="cBio" style="margin:14px 0;overflow-wrap:anywhere"></p></div><div style="display:flex;gap:8px;justify-content:center"><button class="ghost" id="cClose" type="button">Close</button><button id="cAct" type="button"></button></div></dialog>
+<dialog id="dlg">
+  <h3 style="margin:0 0 8px">Your profile</h3>
+  <label for="nm">Display name</label><input id="nm" maxlength="30">
+  <label>Profile picture</label>
+  <div class="pvrow"><div class="av" id="pv"></div><button class="ghost" id="pickImg" type="button">Upload photo</button><button class="ghost" id="rmImg" type="button" style="color:var(--mute)">Remove</button><input type="file" id="file" accept="image/*,.heic,.heif,.avif,.bmp,.svg,.tiff" hidden></div>
+  <label for="bio">Bio</label><input id="bio" maxlength="80" placeholder="A few words about you">
+  <label style="display:flex;gap:10px;align-items:flex-start;margin-top:16px;color:var(--text);font-size:14px"><input type="checkbox" id="rcpt" style="width:auto;margin-top:4px"><span>Read receipts<br><span class="sub" style="white-space:normal">Let others see when you’ve read their messages. If this is off, you won’t see when they read yours either.</span></span></label>
+  <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px"><button class="ghost" id="cancel" type="button">Cancel</button><button id="save" type="button">Save</button></div>
+</dialog>
+<script type="module">
+import{createClient}from"https://esm.sh/@supabase/supabase-js@2.58.0";
+const SUPABASE_URL="https://YOUR-PROJECT-REF.supabase.co"; // <-- paste your Project URL here
+const KEY="sb_publishable_vhrBW7onC5ysK7j7LcEtIg_BPzECd1G";
+const $=id=>document.getElementById(id);
+const hue=s=>{let h=0;for(const c of String(s))h=(h*31+c.charCodeAt(0))%360;return h};
+let sb,me=null,P={},active=null,msgs=[],otherRead=0,lastMine=null,pimg="",imgBlob=null,mode="login",wrote={};
+const msg=t=>{$("authMsg").textContent=t};
+const myRc=()=>(P[me]||{}).receipts!==false;
+const okUrl=u=>typeof u==="string"&&(u.startsWith("data:image/")||u.startsWith(SUPABASE_URL));
+const mk=(tag,cls,txt)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(txt!=null)e.textContent=txt;return e};
+
+function avatar(el,p,id){
+  el.textContent="";el.style.background="hsl("+hue(id||"x")+",60%,85%)";
+  if(p&&okUrl(p.avatar_url)){const i=new Image();i.src=p.avatar_url;i.alt="";el.append(i)}
+  else el.textContent=((p&&p.name)||"?").trim().charAt(0).toUpperCase();
+}
+function renderMe(){const p=P[me]||{};avatar($("meAv"),p,me);$("meName").textContent=p.name||"Set up profile"}
+function renderList(){
+  const q=$("q").value.toLowerCase(),box=$("list");box.textContent="";
+  const o=Object.values(P).filter(p=>p.id!==me&&(p.name+" "+p.username).toLowerCase().includes(q));
+  if(!o.length){box.append(mk("div","empty",q?"No one found.":"No one else has joined yet. Share the link to invite people."));return}
+  o.forEach(p=>{
+    const r=mk("div","row"+(p.id===active?" on":"")),a=mk("div","av");avatar(a,p,p.id);
+    const w=mk("div","grow");w.append(mk("div","name",p.name),mk("div","sub",p.bio||"@"+p.username));
+    r.append(a,w);r.onclick=()=>openChat(p.id);box.append(r);
+  });
+}
+function renderHead(){
+  const p=P[active];if(!p)return;
+  avatar($("pAv"),p,p.id);$("pName").textContent=p.name;$("pBio").textContent=p.bio||"";
+  $("prof").hidden=false;$("pbanner").style.background="hsl("+hue(p.id)+",45%,48%)";
+  avatar($("bAv"),p,p.id);$("bName").textContent=p.name;$("bUser").textContent="@"+p.username;
+  $("bBio").textContent=p.bio||"";$("bBio").hidden=!p.bio;
+  $("bSince").textContent=p.created_at?new Date(p.created_at).toLocaleDateString(undefined,{month:"short",day:"numeric",year:"numeric"}):"Unknown";
+}
+async function openChat(uid){
+  active=uid;msgs=[];otherRead=0;lastMine=null;renderList();renderHead();
+  $("chatTop").hidden=false;$("f").hidden=false;$("app").classList.add("chat");$("msgs").textContent="";
+  const[m,r]=await Promise.all([
+    sb.from("messages").select("*").or(`and(sender.eq.${me},recipient.eq.${uid}),and(sender.eq.${uid},recipient.eq.${me})`).order("created_at").limit(300),
+    sb.from("reads").select("last_read").eq("reader",uid).eq("other",me).maybeSingle()]);
+  if(active!==uid)return;
+  if(m.error){$("msgs").append(mk("div","empty","Couldn’t load messages."));return}
+  msgs=m.data||[];otherRead=r.data?Date.parse(r.data.last_read):0;
+  renderMsgs();markRead();$("in").focus();
+}
+function renderMsgs(){
+  const box=$("msgs");box.textContent="";lastMine=null;
+  if(!msgs.length){box.append(mk("div","empty","No messages yet. Say hi!"));return}
+  msgs.forEach(m=>{
+    const mine=m.sender===me,pr=P[m.sender]||{};
+    const b=mk("div","b"+(mine?" me":""),m.body);
+    const t=mk("div","t"+(mine?" me":""),new Date(m.created_at).toLocaleTimeString([],{hour:"numeric",minute:"2-digit"}));
+    const row=mk("div","mrow"+(mine?" me":"")),av=mk("div","av sm");avatar(av,pr,m.sender);av.onclick=()=>showCard(m.sender);
+    const col=mk("div","mcol"),nm=mk("div","mname",(pr.name||"?")+" "),un=mk("span",null,"@"+(pr.username||""));
+    un.style.opacity=".7";nm.append(un);col.append(nm,b,t);row.append(av,col);box.append(row);
+    if(mine)lastMine={m,t};
+  });
+  placeRead();box.scrollTop=box.scrollHeight;
+}
+function placeRead(){
+  document.querySelectorAll(".rd").forEach(e=>e.remove());
+  if(!lastMine||!myRc()||(P[active]||{}).receipts===false)return;
+  if(otherRead>=Date.parse(lastMine.m.created_at))lastMine.t.after(mk("div","t me rd","Read"));
+}
+async function markRead(){
+  if(!active||!myRc()||document.hidden)return;
+  const th=msgs.filter(m=>m.sender===active).pop();if(!th)return;
+  const ts=Date.parse(th.created_at);if((wrote[active]||0)>=ts)return;wrote[active]=ts;
+  const{error}=await sb.from("reads").upsert({reader:me,other:active,last_read:th.created_at},{onConflict:"reader,other"});
+  if(error)wrote[active]=0;
+}
+function incoming(m){
+  const other=m.sender===me?m.recipient:m.sender;
+  if(other!==active||msgs.some(x=>x.id===m.id))return;
+  msgs.push(m);renderMsgs();markRead();
+}
+document.addEventListener("visibilitychange",markRead);
+$("f").onsubmit=async e=>{
+  e.preventDefault();const text=$("in").value.trim();if(!text||!active)return;$("in").value="";
+  const{data,error}=await sb.from("messages").insert({recipient:active,body:text.slice(0,2000)}).select().single();
+  if(error){$("in").value=text;alert("Message failed to send.")}else incoming(data);
+};
+$("in").onkeydown=e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();$("f").requestSubmit()}};
+$("q").oninput=renderList;
+$("back").onclick=()=>$("app").classList.remove("chat");
+
+// ---- auth ----
+$("toggle").onclick=()=>{
+  mode=mode==="login"?"register":"login";msg("");$("au").hidden=mode==="login";
+  $("authTitle").textContent=mode==="login"?"Log in to your account":"Create your account";
+  $("authBtn").textContent=mode==="login"?"Log in":"Sign up";
+  $("toggle").textContent=mode==="login"?"New here? Create an account":"Have an account? Log in";
+  $("ap").autocomplete=mode==="login"?"current-password":"new-password";
+};
+$("authForm").onsubmit=async e=>{
+  e.preventDefault();msg("");
+  const email=$("ae").value.trim(),pw=$("ap").value,un=$("au").value.trim().toLowerCase();
+  if(mode==="register"&&!/^[a-z0-9_]{3,20}$/.test(un))return msg("Username: 3–20 letters, numbers or underscores.");
+  if(pw.length<6)return msg("Password must be at least 6 characters.");
+  $("authBtn").disabled=true;
+  try{
+    if(mode==="register"){
+      const{data,error}=await sb.auth.signUp({email,password:pw,options:{data:{username:un}}});
+      if(error)return msg(/database/i.test(error.message)?"That username may already be taken.":error.message);
+      if(!data.session)return msg("Almost done! Check your email to confirm, then log in.");
+      start(data.user.id);
+    }else{
+      const{data,error}=await sb.auth.signInWithPassword({email,password:pw});
+      if(error)return msg(error.message);
+      start(data.user.id);
+    }
+  }catch(err){msg("Something went wrong. Please try again.")}
+  finally{$("authBtn").disabled=false}
+};
+
+// ---- profile editor, card, account ----
+function drawPv(){avatar($("pv"),{name:$("nm").value||(P[me]||{}).username,avatar_url:pimg},me)}
+function openEditor(){
+  const p=P[me]||{};$("nm").value=p.name||"";$("bio").value=p.bio||"";$("rcpt").checked=p.receipts!==false;
+  pimg=p.avatar_url||"";imgBlob=null;drawPv();$("dlg").showModal();
+}
+$("nm").oninput=drawPv;
+$("pickImg").onclick=()=>$("file").click();
+$("rmImg").onclick=()=>{pimg="";imgBlob=null;drawPv()};
+$("cancel").onclick=()=>$("dlg").close();
+$("file").onchange=e=>{
+  const f=e.target.files[0];e.target.value="";if(!f)return;
+  const r=new FileReader();
+  r.onload=()=>{
+    const im=new Image();
+    im.onload=()=>{
+      const s=Math.min(im.width,im.height),c=document.createElement("canvas");c.width=c.height=160;
+      const x=c.getContext("2d");x.fillStyle="#fff";x.fillRect(0,0,160,160);
+      if(s>0)x.drawImage(im,(im.width-s)/2,(im.height-s)/2,s,s,0,0,160,160);else x.drawImage(im,0,0,160,160);
+      pimg=c.toDataURL("image/jpeg",0.82);c.toBlob(b=>{imgBlob=b},"image/jpeg",0.82);drawPv();
+    };
+    im.onerror=()=>alert("Your browser couldn’t open that file. Try a JPG, PNG, GIF, WebP or SVG image.");
+    im.src=r.result;
+  };
+  r.readAsDataURL(f);
+};
+$("save").onclick=async()=>{
+  const name=$("nm").value.trim();if(!name){$("nm").focus();return}
+  $("save").disabled=true;
+  try{
+    let url=pimg&&!pimg.startsWith("data:")?pimg:null;
+    if(imgBlob){
+      const path=me+"/avatar.jpg",u=await sb.storage.from("avatars").upload(path,imgBlob,{upsert:true,contentType:"image/jpeg"});
+      if(u.error)throw u.error;
+      url=sb.storage.from("avatars").getPublicUrl(path).data.publicUrl+"?v="+Date.now();
+    }
+    const row={name,bio:$("bio").value.trim(),receipts:$("rcpt").checked,avatar_url:url};
+    const{error}=await sb.from("profiles").update(row).eq("id",me);
+    if(error)throw error;
+    P[me]={...P[me],...row};renderMe();$("dlg").close();
+  }catch(e){alert("Couldn’t save your profile.")}
+  finally{$("save").disabled=false}
+};
+function showCard(uid){
+  const p=P[uid]||{};avatar($("cAv"),p,uid);$("cName").textContent=p.name||"";$("cUser").textContent="@"+(p.username||"");
+  $("cBio").textContent=p.bio||(uid===me?"You haven’t added a bio yet.":"No bio yet.");
+  const b=$("cAct");b.textContent=uid===me?"Edit profile":"Send message";
+  b.onclick=()=>{$("card").close();if(uid===me)openEditor();else openChat(uid)};
+  $("card").showModal();
+}
+function openAcct(){
+  const p=P[me]||{},box=$("acctList");box.textContent="";
+  const r=mk("div","row on"),a=mk("div","av"),w=mk("div","grow");r.style.borderRadius="10px";avatar(a,p,me);
+  w.append(mk("div","name",p.name||""),mk("div","sub","@"+(p.username||"")+" · signed in"));r.append(a,w);box.append(r);
+  $("acct").showModal();
+}
+$("editBtn").onclick=openEditor;$("acctBtn").onclick=openAcct;
+$("acctClose").onclick=()=>$("acct").close();$("cClose").onclick=()=>$("card").close();
+$("outBtn").onclick=async()=>{await sb.auth.signOut();location.reload()};
+$("meAv").onclick=$("meName").onclick=()=>showCard(me);
+$("pAv").onclick=$("pName").onclick=()=>{if(active)showCard(active)};
+$("bFull").onclick=()=>{if(active)showCard(active)};
+
+// ---- start ----
+async function start(id){
+  me=id;$("auth").hidden=true;$("app").hidden=false;
+  const{data,error}=await sb.from("profiles").select("*");
+  if(error){$("list").textContent="Couldn’t load people.";return}
+  P={};data.forEach(p=>P[p.id]=p);renderMe();renderList();
+  sb.channel("live")
+    .on("postgres_changes",{event:"INSERT",schema:"public",table:"messages",filter:"recipient=eq."+me},x=>incoming(x.new))
+    .on("postgres_changes",{event:"INSERT",schema:"public",table:"messages",filter:"sender=eq."+me},x=>incoming(x.new))
+    .on("postgres_changes",{event:"*",schema:"public",table:"reads",filter:"other=eq."+me},x=>{
+      if(x.new&&x.new.reader===active){otherRead=Date.parse(x.new.last_read);placeRead()}})
+    .on("postgres_changes",{event:"*",schema:"public",table:"profiles"},x=>{
+      if(x.new&&x.new.id){P[x.new.id]=x.new;renderMe();renderList();if(active){renderHead();placeRead()}}})
+    .subscribe();
+}
+async function init(){
+  if(SUPABASE_URL.includes("YOUR-PROJECT")){$("auth").hidden=false;msg("Set SUPABASE_URL at the top of the script first.");return}
+  sb=createClient(SUPABASE_URL,KEY);
+  const{data:{session}}=await sb.auth.getSession();
+  if(session)start(session.user.id);else $("auth").hidden=false;
+}
+init();
+</script>
+</body>
+</html>
