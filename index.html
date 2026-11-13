@@ -154,6 +154,10 @@ button:active{transform:scale(.96)}
 .slabel{padding:10px 14px 4px;font-size:12px;font-weight:700;color:var(--mute);display:flex;justify-content:space-between;align-items:center;text-transform:uppercase;letter-spacing:.04em}
 .slabel button{padding:2px 8px;font-size:12px;text-transform:none;letter-spacing:0}
 #gdlg,#ginfo{max-height:90vh;overflow-y:auto}
+.b.img{padding:4px}
+.b.img img{display:block;max-width:min(260px,60vw);max-height:300px;border-radius:12px;cursor:zoom-in}
+.b .cap{padding:4px 8px 2px;white-space:pre-wrap;overflow-wrap:anywhere}
+.att{position:absolute;bottom:100%;left:14px;margin-bottom:6px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:6px;display:flex;gap:8px;align-items:center;z-index:3}
 </style>
 </head>
 <body>
@@ -174,7 +178,7 @@ button:active{transform:scale(.96)}
 <main>
   <div class="top" id="chatTop" hidden><button class="ghost" id="back">←</button><div class="av" id="pAv"></div><div class="grow"><div class="name" id="pName"></div><div class="sub" id="pBio"></div></div></div>
   <div id="msgs"><div class="empty">Pick someone from the list to start a conversation.</div></div>
-  <form id="f" hidden><button type="button" id="emoBtn" class="ghost" style="font-size:20px;padding:6px 10px">😊</button><textarea id="in" rows="1" placeholder="Write a message…" style="resize:none"></textarea><button>Send</button><div id="emopop" class="pop" hidden><input id="eq" placeholder="Find the perfect emoji" autocomplete="off"><div class="eg" id="eg"></div></div><div id="acpop" class="pop" hidden></div></form>
+  <form id="f" hidden><button type="button" id="emoBtn" class="ghost" style="font-size:20px;padding:6px 10px">😊</button><button type="button" id="attBtn" class="ghost" title="Send an image" style="font-size:20px;padding:6px 10px">📎</button><input type="file" id="afile" accept="image/*" hidden><textarea id="in" rows="1" placeholder="Write a message…" style="resize:none"></textarea><button>Send</button><div id="attPrev" class="att" hidden></div><div id="emopop" class="pop" hidden><input id="eq" placeholder="Find the perfect emoji" autocomplete="off"><div class="eg" id="eg"></div></div><div id="acpop" class="pop" hidden></div></form>
 </main>
 <section id="prof" hidden>
   <div class="banner" id="pbanner"></div>
@@ -209,13 +213,17 @@ button:active{transform:scale(.96)}
   <label style="display:flex;gap:10px;align-items:flex-start;margin-top:16px;color:var(--text);font-size:14px"><input type="checkbox" id="rcpt" style="width:auto;margin-top:4px"><span>Read receipts<br><span class="sub" style="white-space:normal">Let others see when you’ve read their messages. If this is off, you won’t see when they read yours either.</span></span></label>
   <div id="saveMsg" style="color:#d9534f;font-size:13px;min-height:18px;margin-top:10px"></div><div style="display:flex;gap:8px;justify-content:flex-end;margin-top:6px"><button class="ghost" id="cancel" type="button">Cancel</button><button id="save" type="button">Save</button></div>
 </dialog>
+<dialog id="lb" style="padding:0;border:0;background:transparent;width:auto;max-width:96vw"><img id="lbImg" alt="" style="display:block;max-width:94vw;max-height:90vh;border-radius:12px;cursor:zoom-out"></dialog>
+<input type="file" id="gfile" accept="image/*,.heic,.heif,.avif,.bmp,.svg,.tiff" hidden>
 <dialog id="gdlg"><h3 style="margin:0 0 8px">New group</h3>
+  <div class="pvrow"><div class="av" id="gpv" style="width:64px;height:64px;font-size:24px"></div><button class="ghost" id="gnPhoto" type="button">Add photo</button><button class="ghost" id="gnRm" type="button" style="color:var(--mute)">Remove</button></div>
   <label for="gname">Group name</label><input id="gname" maxlength="40" placeholder="Weekend plans">
   <label>Add people</label><input id="gq" placeholder="Search people" autocomplete="off"><div id="gpick" style="max-height:220px;overflow-y:auto;margin-top:6px"></div>
   <div id="gmsg" style="color:#d9534f;font-size:13px;min-height:18px;margin-top:8px"></div>
   <div style="display:flex;gap:8px;justify-content:flex-end"><button class="ghost" id="gCancel" type="button">Cancel</button><button id="gCreate" type="button">Create</button></div>
 </dialog>
 <dialog id="ginfo"><h3 style="margin:0 0 8px">Group</h3>
+  <div class="pvrow"><div class="av" id="gi_av" style="width:64px;height:64px;font-size:24px"></div><button class="ghost" id="gi_photo" type="button">Change photo</button><button class="ghost" id="gi_rmphoto" type="button" style="color:var(--mute)">Remove</button></div>
   <label for="gi_name">Name</label><input id="gi_name" maxlength="40">
   <label>Members</label><div id="gi_members"></div>
   <label>Add people</label><input id="gi_q" placeholder="Search people" autocomplete="off"><div id="gi_pick" style="max-height:160px;overflow-y:auto;margin-top:6px"></div>
@@ -230,7 +238,7 @@ const KEY="sb_publishable_vhrBW7onC5ysK7j7LcEtIg_BPzECd1G";
 const DEF=["data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAMAAAD04JH5AAAAwFBMVEX/BQD/BAD/AwD/AgD+BQD9BQD+BAD9BAD+AwD8BQD8BAD6BQD7BAD5BAD1BADxBQDsBQDmBQDgBQDcBQDgAgDWBgDMBwDECQDEAwCzDQC7CgC2AwCkDwChAwCbAgCSEQCDEwCRAwCDAwCBAgBxFQB0CQB5AgB2AgBzAgBtAgB0AQBdGABcGABbGABaGQBaGABZGABWGQBYGABWGABTGQBSGQBRGQBQGQBPGQBOGQBNGgBNGQBMGQBmFwBeFwBnBgDS1P3RAAAGVklEQVR42u2afXeqOBCHA9qwZVVEFyi3tFLL+tKbbBTxhevFfv9vtTOora0vIKCce47zj5X29PdkJjNJJpBRyUZuADeAG8AN4AZwA7gB/KkAgjPG0fBDXBlAMO4Hi3AZLhbzxXK5mE7gydUABBNBOGee69iWZZmW7XS8KFjOfCauASDYJAw8x9IV+dMkzXBctgw4vzSAYMEycowaiiqqqqDBhyTBA932prMMCOcAwOg9W0NxhUq7RhWVyhXFdKfTswORHkCIMLLrqC4dMqqAH0w39PmFANhk1mlWpG9j/2IKlam9mrOLALB5ZMmyIp02hVZ095cQxQOwpduUT41+a6osObNzwpAOgC87iqxKaYxS2fInvFgAHjoypVJKUyumSE9AUo3fSeX+zzAYfCKKA2AwfvUMfSQwg5EoCoCF7lnjXxP8WPCCAHjgNeiZ+kjgLFlBHvBbiel/qC7WvCkvAoDBBFSl802RW34RHoAA1BSaASB1EJIAZkaGAKwLUiNKk4unAfjczaiPQfgRsrwAIjAyA0i05gUiHwCfuTLNqg+zwE4xC04DhFamFNh4QNJWvsgDICZRQ8ruAZgFneRZQE4W4U72GYAAf5nJBfkUAF9YuQColCITTwAIf9XME4E4BokuIJfKgbR5QIpfBnY9YExFHoAfOQGo3ExMRHKhMriZhX97Y5GjDug55wC4wE3aFZCTSZAXIEUakIvVwW0tzA4wjurlAhTkAfbnhsCPtPwA7pzn2A/kT0PJnWUHENO8hQhWg8Rd2alSHBZQin/6f/BiVPpynD8Ncm5IwAVmqVuy/JtS2Zzl2pRCLayXui2Ho2GebTEeTCYiJ0C+o1ma02nS4bRd6uEUjiadco/nOdYD7BIFuRsUIz71qHKxKpiqSRXaWZtUo1RdqiQA4Wds01F3VkibDoNQK7dRiQX53CCoFWteVKsWCH6fuy9QZWPkF9asxmpw3kRU5fbPcdoLgzQAQkAqpO+Xgv4qKPTCAgkcOWUuUKVi8nHBVzYjwZeulurWQpFlOyj+0gpzwTNkKckJlFaabji6wLUdEARjp3EaAYo2saLFebe36a9u+ehXZKnSsbtTis/bnWD8nz865+Yy5RwQ/thn0ft796GOgf5+eR2rS+2n4XAwfF+J8djnBd6aCT4KxqtoOHh7GwyHr4/6erZ9WkyjPbyAPBj81b/RahaIdAzJawEPQuF1u6+9Pv57GOHg5dFofPFAvfXw3H+P5QeDfu/15fmp4wWLVC9VJG1I+HThOebD49NLt9vr9ftvgz4wDHsvT48PZrttGObj0/MrPEH5tz6od7v4u3+aZme1nLB8m1LBgoVnNWStjQjPL+gHgACDWIBmbPg5iB/2YvVnRGs1IWOadrT08xzN2Dj0LCqRekPTYwRgQAig2Fj/46feK4qDeuwZXWvU7u+liuaswhHPCMD9X5Fdg8yvVu/rjabeNoBhDYEYsaFqbPgMxUHdaIF8/b5ajV+qaHZGi5OzkRwd/vznR+Gp3gGC1tRbwAAQiAEgH4bf8OlDrN5E+bvqpjjIcqszG7OzAbgfunrls+4BQg0ZAAInHnCsSda6oGwaRhvEUb22ld8iWFF43AnkyAsbzJa/Lj7V6p0KDI2YQm+1Wu0Pgy86amuNtXr1W4mUtc78qBPIwaKLw9/fCFYB4h4oEKOh7Rh+r9drKopXD66QuESkBmDjiX1s9SdVpLgDDrX2YSoo36F2lRxbpcAJy8MrxD4Am0VG5fQ+OMb4aiRxm3Dk3Ray35ry9Jy9qSNOsHjAEgFg69Op5+4OHtkqtg5NBPJt2Z07yfuezASau39eJl/1F3ZFodKFTJFr7t55iXzTv0D4dwikfQJyRX1sG+0RkGvqHyIgO3f1l9dfE3zJBZL9CJq1g97wpmwfIMv7UllzQd9tH5KPNkSG96Uyd3B33jQjm6bsqiUr0pUM+1f8G8DUvJ4+Enw2kck1J+ChN83Ipg+l0CsCwDRob+chiWdA+5oBWBNsu2hkfTl1Zf2dIJASArANwsYDJQRgt5VJ8l4MZQ7C5nU/4vPmX7QEALxPQBeQ306lDAegD+p4oUBWTUrLAYB9cshHxJZLcgDmIqQiqdGy9HFZnHMilWiUetNSAdSK/btcD0haVCoArknlAlBJLxcAj/ol69PSPfA/7b9z34p8KjwAAAAASUVORK5CYII=", "data:image/png;base64,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", "data:image/png;base64,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"];
 const $=id=>document.getElementById(id);
 const hue=s=>{let h=0;for(const c of String(s))h=(h*31+c.charCodeAt(0))%360;return h};
-let sb,me=null,P={},active=null,msgs=[],otherRead=0,lastMine=null,pimg="",imgBlob=null,mode="login",wrote={},seen=new Set(),tch=null,tReady=false,typingOn=false,typingTimer=null,lastTyping=0,pres={},myState="online",lastAct=Date.now(),pch=null,bimg="",bBlob=null,bcolor="",G={},activeG=null,gsel=new Set(),gsel2=new Set(),gT=null;
+let sb,me=null,P={},active=null,msgs=[],otherRead=0,lastMine=null,pimg="",imgBlob=null,mode="login",wrote={},seen=new Set(),tch=null,tReady=false,typingOn=false,typingTimer=null,lastTyping=0,pres={},myState="online",lastAct=Date.now(),pch=null,bimg="",bBlob=null,bcolor="",G={},activeG=null,gsel=new Set(),gsel2=new Set(),gT=null,att=null,gnBlob=null,gnUrl="",gTarget="new";
 const msg=t=>{$("authMsg").textContent=t};
 const myRc=()=>(P[me]||{}).receipts!==false;
 const okUrl=u=>typeof u==="string"&&(u.startsWith("data:image/")||u.startsWith(SUPABASE_URL));
@@ -255,7 +263,11 @@ function copyId(el,txt){
 }
 function renderMe(){const p=P[me]||{};avatar($("meAv"),p,me);$("meName").textContent=p.name||"Set up profile"}
 const rank={online:0,idle:1,offline:2};
-function setGroupAv(el,g){el.classList.add("gav");el.textContent=(g.name||"?").trim().slice(0,2).toUpperCase();el.style.background="hsl("+hue(g.id)+",55%,42%)"}
+function setGroupAv(el,g){
+  el.textContent="";el.style.background="hsl("+hue(g.id)+",55%,42%)";
+  if(okUrl(g.avatar_url)){el.classList.remove("gav");const i=new Image();i.src=g.avatar_url;i.alt="";el.append(i)}
+  else{el.classList.add("gav");el.textContent=(g.name||"?").trim().slice(0,2).toUpperCase()}
+}
 function renderList(){
   const raw=$("q").value.toLowerCase(),q=raw.replace(/^#/,""),box=$("list");box.textContent="";
   const gs=Object.values(G).filter(g=>String(g.name).toLowerCase().includes(raw)).sort((a,b)=>String(a.name).localeCompare(String(b.name)));
@@ -287,7 +299,7 @@ function renderHead(){
   $("bSince").textContent=p.created_at?new Date(p.created_at).toLocaleDateString(undefined,{month:"short",day:"numeric",year:"numeric"}):"Unknown";
 }
 async function openChat(uid){
-  active=uid;activeG=null;msgs=[];otherRead=0;lastMine=null;seen=new Set();typingOn=false;clearTimeout(typingTimer);openTyping(uid);renderList();renderHead();
+  clearAtt();active=uid;activeG=null;msgs=[];otherRead=0;lastMine=null;seen=new Set();typingOn=false;clearTimeout(typingTimer);openTyping(uid);renderList();renderHead();
   $("chatTop").hidden=false;$("f").hidden=false;$("app").classList.add("chat");$("msgs").textContent="";
   const[m,r]=await Promise.all([
     sb.from("messages").select("*").or(`and(sender.eq.${me},recipient.eq.${uid}),and(sender.eq.${uid},recipient.eq.${me})`).order("created_at").limit(300),
@@ -303,6 +315,18 @@ function fmtTime(d){
   if(t.toDateString()===new Date(n-864e5).toDateString())return"Yesterday at "+tm;
   return t.toLocaleDateString([],{month:"numeric",day:"numeric",year:"2-digit"})+", "+tm;
 }
+const IMGP=SUPABASE_URL+"/storage/v1/object/public/avatars/";
+function parseBody(m){
+  const b=String(m.body||"");
+  if(b.startsWith("[img]")){
+    const nl=b.indexOf("\n"),u=b.slice(5,nl<0?undefined:nl),cap=nl<0?"":b.slice(nl+1);
+    if(u.startsWith(IMGP)||(m.pending&&u.startsWith("blob:")))return{img:u,cap};
+  }
+  return{text:b};
+}
+const previewText=b=>{const p=parseBody({body:b});return p.img?"📷 Photo"+(p.cap?": "+p.cap:""):p.text};
+function openLb(u){$("lbImg").src=u;$("lb").showModal()}
+$("lb").onclick=()=>$("lb").close();
 function renderMsgs(){
   const box=$("msgs");box.textContent="";lastMine=null;
   if(!msgs.length){box.append(mk("div","empty","No messages yet. Say hi!"));return}
@@ -321,7 +345,13 @@ function renderMsgs(){
     if(last){av=mk("div","av sm");avatar(av,pr,m.sender,true);av.onclick=()=>showCard(m.sender)}else av=mk("div","sp");
     const col=mk("div","mcol");
     if(first&&!mine)col.append(mk("div","mname",pr.name||"?"));
-    const bub=mk("div","b"+(mine?" me":""),m.body);bub.title=fmtTime(ts);col.append(bub);
+    const pb=parseBody(m),bub=mk("div","b"+(mine?" me":"")+(pb.img?" img":""),pb.img?null:pb.text);bub.title=fmtTime(ts);
+    if(pb.img){
+      const im=new Image();im.src=pb.img;im.alt="Photo";im.onclick=()=>openLb(pb.img);
+      im.onload=()=>{const bx=$("msgs");if(bx.scrollHeight-bx.scrollTop-bx.clientHeight<420)bx.scrollTop=bx.scrollHeight};
+      bub.append(im);if(pb.cap)bub.append(mk("div","cap",pb.cap));
+    }
+    col.append(bub);
     let tm=null;
     if(last||m.failed){tm=mk("div","t"+(mine?" me":""),m.failed?"Not sent":fmtTime(ts));col.append(tm)}
     row.append(av,col);box.append(row);prev=m;
@@ -350,7 +380,7 @@ async function notify(m){
   if(here&&document.hasFocus()&&!document.hidden)return;
   let p=P[m.sender];
   if(!p){const r=await sb.from("profiles").select("*").eq("id",m.sender).maybeSingle();if(r.data){P[m.sender]=p=r.data;renderList()}}
-  const g=gid?G[gid]:null,who=(p&&p.name)||"Someone",text=String(m.body||"").slice(0,140);
+  const g=gid?G[gid]:null,who=(p&&p.name)||"Someone",text=previewText(m.body).slice(0,140);
   try{
     const n=new Notification(gid?((g&&g.name)||"Group chat"):((p&&p.name)||"New message"),{body:gid?who+": "+text:text,tag:gid?"grp-"+gid:"msg-"+m.sender,icon:p&&typeof p.avatar_url==="string"&&p.avatar_url.startsWith("http")?p.avatar_url:undefined});
     n.onclick=()=>{window.focus();if(gid)openGroup(gid);else openChat(m.sender);n.close()};
@@ -413,14 +443,50 @@ function drawTyping(){
   avatar(av,P[active],active,true);b.append(mk("i"),mk("i"),mk("i"));col.append(b);row.append(av,col);box.append(row);
   if(near)box.scrollTop=box.scrollHeight;
 }
+function clearAtt(){att=null;$("attPrev").hidden=true;$("attPrev").textContent=""}
+function setAtt(file){
+  const im=new Image(),url=URL.createObjectURL(file);
+  im.onload=()=>{
+    const k=Math.min(1,1600/Math.max(im.width,im.height)),w=Math.max(1,Math.round(im.width*k)),h=Math.max(1,Math.round(im.height*k));
+    const c=document.createElement("canvas");c.width=w;c.height=h;const x=c.getContext("2d");
+    x.fillStyle="#fff";x.fillRect(0,0,w,h);x.drawImage(im,0,0,w,h);URL.revokeObjectURL(url);
+    c.toBlob(b=>{
+      if(!b){alert("Couldn’t process that image.");return}
+      const u=URL.createObjectURL(b);att={blob:b,url:u};
+      const pv=$("attPrev");pv.textContent="";
+      const t=new Image();t.src=u;t.alt="";t.style.cssText="height:64px;border-radius:8px;display:block";
+      const rm=mk("button","ghost","✕");rm.type="button";rm.onclick=clearAtt;
+      pv.append(t,rm);pv.hidden=false;$("in").focus();
+    },"image/jpeg",.85);
+  };
+  im.onerror=()=>{URL.revokeObjectURL(url);alert("Your browser couldn’t open that file. Try a JPG, PNG, GIF or WebP image.")};
+  im.src=url;
+}
+$("attBtn").onclick=()=>$("afile").click();
+$("afile").onchange=e=>{const f=e.target.files[0];e.target.value="";if(f)setAtt(f)};
+$("in").onpaste=e=>{
+  const f=[...((e.clipboardData&&e.clipboardData.files)||[])].find(x=>x.type.startsWith("image/"));
+  if(f){e.preventDefault();setAtt(f)}
+};
 $("f").onsubmit=async e=>{
   e.preventDefault();hidePops();
-  const text=emojify($("in").value.trim()),gid=activeG,to=active;if(!text||(!to&&!gid))return;$("in").value="";
-  const tmp={id:"tmp"+Date.now()+Math.random(),sender:me,recipient:to,group_id:gid,body:text.slice(0,2000),created_at:new Date().toISOString(),pending:true};
+  const caption=emojify($("in").value.trim()),gid=activeG,to=active,a=att;
+  if((!caption&&!a)||(!to&&!gid))return;
+  $("in").value="";clearAtt();
+  const cap=caption.slice(0,a?500:2000);
+  const tmp={id:"tmp"+Date.now()+Math.random(),sender:me,recipient:to,group_id:gid,body:a?"[img]"+a.url+(cap?"\n"+cap:""):cap,created_at:new Date().toISOString(),pending:true};
   msgs.push(tmp);renderMsgs();
-  const req=gid?sb.from("group_messages").insert({group_id:gid,body:tmp.body}):sb.from("messages").insert({recipient:to,body:tmp.body});
+  const here=()=>gid?activeG===gid:active===to;
+  let body=tmp.body;
+  if(a){
+    const path=me+"/chat/"+Date.now()+"-"+Math.random().toString(36).slice(2,8)+".jpg";
+    const u=await sb.storage.from("avatars").upload(path,a.blob,{contentType:"image/jpeg"});
+    if(u.error){tmp.pending=false;tmp.failed=true;if(here())renderMsgs();return}
+    body="[img]"+sb.storage.from("avatars").getPublicUrl(path).data.publicUrl+(cap?"\n"+cap:"");
+  }
+  const req=gid?sb.from("group_messages").insert({group_id:gid,body}):sb.from("messages").insert({recipient:to,body});
   const{data,error}=await req.select().single();
-  if(gid?activeG!==gid:active!==to)return;
+  if(!here())return;
   if(error){tmp.pending=false;tmp.failed=true;renderMsgs();return}
   seen.add(data.id);
   if(msgs.some(x=>x.id===data.id))msgs=msgs.filter(x=>x!==tmp);else{const i=msgs.indexOf(tmp);if(i>=0)msgs[i]=data}
@@ -617,7 +683,7 @@ function renderGroupHead(){
 }
 async function openGroup(gid){
   const g=G[gid];if(!g)return;
-  active=null;activeG=gid;msgs=[];otherRead=0;lastMine=null;seen=new Set();typingOn=false;clearTimeout(typingTimer);
+  clearAtt();active=null;activeG=gid;msgs=[];otherRead=0;lastMine=null;seen=new Set();typingOn=false;clearTimeout(typingTimer);
   if(tch){sb.removeChannel(tch);tch=null}tReady=false;
   renderList();renderGroupHead();
   $("prof").hidden=true;$("chatTop").hidden=false;$("f").hidden=false;$("app").classList.add("chat");$("msgs").textContent="";
@@ -637,7 +703,7 @@ function drawPick(box,qEl,sel,excl){
   });
 }
 function openNewGroup(){
-  gsel=new Set();$("gname").value="";$("gq").value="";$("gmsg").textContent="";
+  gsel=new Set();gnBlob=null;gnUrl="";$("gname").value="";$("gq").value="";$("gmsg").textContent="";drawGnAv();
   drawPick($("gpick"),$("gq"),gsel);$("gdlg").showModal();
 }
 $("gq").oninput=()=>drawPick($("gpick"),$("gq"),gsel);
@@ -652,6 +718,7 @@ $("gCreate").onclick=async()=>{
     if(r.error)throw r.error;
     const m=await sb.from("group_members").insert([me,...gsel].map(u=>({group_id:r.data.id,user_id:u})));
     if(m.error)throw m.error;
+    if(gnBlob){const pr=await uploadGroupPhoto(r.data.id,gnBlob,gnUrl);if(pr.error)console.warn("Group photo failed:",pr.error.message)}
     $("gdlg").close();await loadGroups();openGroup(r.data.id);
   }catch(e){
     const t=(e&&e.message)||String(e);
@@ -664,7 +731,7 @@ function openGroupInfo(){
   renderGroupInfo();$("ginfo").showModal();
 }
 function renderGroupInfo(){
-  const g=G[activeG];if(!g)return;const box=$("gi_members");box.textContent="";
+  const g=G[activeG];if(!g)return;setGroupAv($("gi_av"),g);const box=$("gi_members");box.textContent="";
   g.members.forEach(id=>{
     const p=P[id]||{},r=mk("div","row"),a=mk("div","av"),w=mk("div","grow");avatar(a,p,id);
     w.append(mk("div","name",(id===me?"You":p.name||"?")+(id===g.created_by?" · creator":"")),mk("div","sub","@"+(p.username||"")));
@@ -703,6 +770,33 @@ $("gi_leave").onclick=async()=>{
   $("ginfo").close();await loadGroups();
 };
 $("gi_close").onclick=()=>$("ginfo").close();
+function drawGnAv(){setGroupAv($("gpv"),{id:"new",name:$("gname").value||"?",avatar_url:gnUrl})}
+$("gname").oninput=drawGnAv;
+async function uploadGroupPhoto(gid,blob,dataUrl){
+  const path=me+"/group-"+gid+"-"+Date.now()+".jpg";
+  const u=await sb.storage.from("avatars").upload(path,blob,{contentType:"image/jpeg"});
+  const url=u.error?dataUrl:sb.storage.from("avatars").getPublicUrl(path).data.publicUrl;
+  return sb.from("groups").update({avatar_url:url}).eq("id",gid).select();
+}
+const photoErr=r=>r.error?(/column|schema cache|permission/i.test(r.error.message)?"Couldn’t save the photo: run the group photo SQL in Supabase first.":"Couldn’t save the photo: "+r.error.message):(!r.data||!r.data.length?"Couldn’t save the photo.":"");
+$("gnPhoto").onclick=()=>{gTarget="new";$("gfile").click()};
+$("gnRm").onclick=()=>{gnBlob=null;gnUrl="";drawGnAv()};
+$("gi_photo").onclick=()=>{gTarget="info";$("gfile").click()};
+$("gi_rmphoto").onclick=async()=>{
+  const g=G[activeG];if(!g)return;
+  const r=await sb.from("groups").update({avatar_url:null}).eq("id",g.id).select(),m=photoErr(r);
+  $("gi_msg").textContent=m;if(!m)await loadGroups();
+};
+$("gfile").onchange=e=>{
+  const f=e.target.files[0];e.target.value="";if(!f)return;
+  const tgt=gTarget;
+  openCrop(f,{title:"Crop group photo",w:320,h:320,ow:256,oh:256,round:true},async(b,u)=>{
+    if(tgt==="new"){gnBlob=b;gnUrl=u;drawGnAv();return}
+    const g=G[activeG];if(!g)return;const sm=$("gi_msg");sm.textContent="Saving photo…";
+    const r=await uploadGroupPhoto(g.id,b,u),m=photoErr(r);
+    sm.textContent=m;if(!m)await loadGroups();
+  });
+};
 
 // ---- presence (online / idle / offline) ----
 function updDots(){document.querySelectorAll(".pd[data-u]").forEach(d=>{const t=stateOf(d.dataset.u);d.className="pd "+t;d.title=stLabel[t]})}
