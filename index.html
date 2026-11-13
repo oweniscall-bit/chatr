@@ -129,6 +129,15 @@ button:active{transform:scale(.96)}
 .dvd{display:flex;align-items:center;gap:12px;margin:18px 20px 6px;color:var(--mute);font-size:12px;font-weight:600}
 .dvd::before,.dvd::after{content:"";flex:1;height:1px;background:var(--line)}
 .mrow.typing{margin:8px 20px 4px}
+#msgs{gap:3px;padding:16px}
+.mrow{align-self:flex-start;align-items:flex-end}
+.mrow.first{margin-top:10px}
+.mrow.typing{margin:10px 0 0}
+.sp{width:32px;flex:none}
+.mrow .t{margin:2px 6px 0}
+.mname{margin-top:0}
+#notifBar{display:flex;gap:10px;align-items:center;padding:8px 14px;border-bottom:1px solid var(--line);font-size:13px;color:var(--mute)}
+#notifBar button{padding:5px 10px;font-size:13px;flex:none}
 </style>
 </head>
 <body>
@@ -142,6 +151,7 @@ button:active{transform:scale(.96)}
 <div id="app" hidden>
 <aside>
   <div class="top"><div class="av" id="meAv"></div><div class="grow"><div class="name" id="meName">…</div><div class="sub">Your profile</div></div><button class="ghost" id="editBtn">Edit</button><button class="ghost" id="acctBtn">Account</button></div>
+  <div id="notifBar" hidden><span class="grow">Get alerts when someone messages you</span><button id="notifBtn" type="button">Turn on</button></div>
   <div class="search"><input id="q" placeholder="Search people" autocomplete="off"></div>
   <div id="list"><div class="empty">Loading…</div></div>
 </aside>
@@ -231,28 +241,26 @@ function fmtTime(d){
 function renderMsgs(){
   const box=$("msgs");box.textContent="";lastMine=null;
   if(!msgs.length){box.append(mk("div","empty","No messages yet. Say hi!"));return}
-  let prev=null,col=null,lastDay="";
-  msgs.forEach(m=>{
-    const pr=P[m.sender]||{},ts=Date.parse(m.created_at),day=new Date(ts).toDateString();
-    const isNew=!seen.has(m.id);seen.add(m.id);let started=false;
+  let prev=null,lastDay="";
+  msgs.forEach((m,i)=>{
+    const pr=P[m.sender]||{},ts=Date.parse(m.created_at),day=new Date(ts).toDateString(),mine=m.sender===me;
+    const isNew=!seen.has(m.id);seen.add(m.id);
     if(day!==lastDay){
       lastDay=day;prev=null;
       const dv=mk("div","dvd");dv.append(mk("span",null,new Date(ts).toLocaleDateString([],{weekday:"long",month:"long",day:"numeric"})));box.append(dv);
     }
-    if(!prev||prev.sender!==m.sender||ts-Date.parse(prev.created_at)>3e5){
-      started=true;
-      const grp=mk("div","mg"+(isNew?" anim":"")),av=mk("div","av");avatar(av,pr,m.sender);av.onclick=()=>showCard(m.sender);
-      col=mk("div","mc");
-      const hd=mk("div","mh"),nm=mk("span","mn",pr.name||"?");
-      nm.style.color="hsl("+hue(m.sender)+",55%,var(--nl))";nm.onclick=()=>showCard(m.sender);
-      hd.append(nm,mk("span","mu","@"+(pr.username||"")),mk("span","mtime",fmtTime(ts)));
-      col.append(hd);grp.append(av,col);box.append(grp);
-    }
-    const line=mk("div","mt"+(m.pending?" pending":"")+(m.failed?" failed":"")+(isNew&&!started?" anim":""),m.body);
-    line.title=fmtTime(ts);
-    if(m.failed)line.append(mk("span","fl"," · Not sent"));
-    col.append(line);prev=m;
-    if(m.sender===me&&!m.pending&&!m.failed)lastMine={m,t:line};
+    const first=!prev||prev.sender!==m.sender||ts-Date.parse(prev.created_at)>3e5;
+    const nx=msgs[i+1],last=!nx||nx.sender!==m.sender||Date.parse(nx.created_at)-ts>3e5||new Date(nx.created_at).toDateString()!==day;
+    const row=mk("div","mrow"+(mine?" me":"")+(first?" first":"")+(m.pending?" pending":"")+(m.failed?" failed":"")+(isNew?" anim":""));
+    let av;
+    if(last){av=mk("div","av sm");avatar(av,pr,m.sender);av.onclick=()=>showCard(m.sender)}else av=mk("div","sp");
+    const col=mk("div","mcol");
+    if(first&&!mine)col.append(mk("div","mname",pr.name||"?"));
+    const bub=mk("div","b"+(mine?" me":""),m.body);bub.title=fmtTime(ts);col.append(bub);
+    let tm=null;
+    if(last||m.failed){tm=mk("div","t"+(mine?" me":""),m.failed?"Not sent":fmtTime(ts));col.append(tm)}
+    row.append(av,col);box.append(row);prev=m;
+    if(mine&&!m.pending&&!m.failed)lastMine={m,t:tm||bub};
   });
   placeRead();drawTyping();box.scrollTop=box.scrollHeight;
 }
@@ -268,7 +276,21 @@ async function markRead(){
   const{error}=await sb.from("reads").upsert({reader:me,other:active,last_read:th.created_at},{onConflict:"reader,other"});
   if(error)wrote[active]=0;
 }
+const canNotify="Notification" in window;
+function syncNotif(){$("notifBar").hidden=!canNotify||Notification.permission!=="default"}
+$("notifBtn").onclick=async()=>{try{await Notification.requestPermission()}catch(e){}syncNotif()};
+async function notify(m){
+  if(!canNotify||Notification.permission!=="granted"||m.sender===me)return;
+  if(m.sender===active&&document.hasFocus()&&!document.hidden)return;
+  let p=P[m.sender];
+  if(!p){const r=await sb.from("profiles").select("*").eq("id",m.sender).maybeSingle();if(r.data){P[m.sender]=p=r.data;renderList()}}
+  try{
+    const n=new Notification((p&&p.name)||"New message",{body:String(m.body||"").slice(0,140),tag:"msg-"+m.sender,icon:p&&typeof p.avatar_url==="string"&&p.avatar_url.startsWith("http")?p.avatar_url:undefined});
+    n.onclick=()=>{window.focus();openChat(m.sender);n.close()};
+  }catch(e){}
+}
 function incoming(m){
+  notify(m);
   const other=m.sender===me?m.recipient:m.sender;
   if(other!==active||msgs.some(x=>x.id===m.id))return;
   if(m.sender===active){typingOn=false;clearTimeout(typingTimer)}msgs.push(m);renderMsgs();markRead();
@@ -402,7 +424,7 @@ $("save").onclick=async()=>{
     let url=pimg&&!pimg.startsWith("data:")?pimg:null,warn="";
     if(imgBlob){
       const path=me+"/avatar.jpg",u=await sb.storage.from("avatars").upload(path,imgBlob,{upsert:true,contentType:"image/jpeg"});
-      if(u.error){warn="Photo upload failed: "+u.error.message;url=(P[me]||{}).avatar_url||null}
+      if(u.error){console.warn("Avatar upload failed:",u.error.message);url=pimg}
       else url=sb.storage.from("avatars").getPublicUrl(path).data.publicUrl+"?v="+Date.now();
     }
     const row={name,bio:$("bio").value.trim(),receipts:$("rcpt").checked,avatar_url:url};
@@ -436,7 +458,7 @@ $("bFull").onclick=()=>{if(active)showCard(active)};
 
 // ---- start ----
 async function start(id){
-  me=id;$("auth").hidden=true;$("app").hidden=false;
+  me=id;$("auth").hidden=true;$("app").hidden=false;syncNotif();
   const{data,error}=await sb.from("profiles").select("*");
   if(error){$("list").textContent="Couldn’t load people.";return}
   P={};data.forEach(p=>P[p.id]=p);renderMe();renderList();
