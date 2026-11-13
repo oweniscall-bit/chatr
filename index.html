@@ -240,6 +240,11 @@ dialog.page input:not([type=checkbox]):not([type=range]):not([type=color]):not([
 .svrail button.on{color:#fff}.svrail button.on svg{fill:#fff}
 .svb{display:grid;place-items:center}
 .scm .x{display:inline-flex;line-height:0}
+.mn2{background:rgba(47,158,91,.18);color:var(--accent);border-radius:6px;padding:0 4px;font-weight:700;cursor:pointer}
+.mn2.me{background:var(--accent);color:#fff}
+.mrow.pinged .b{box-shadow:0 0 0 2px var(--accent)}
+.ubadge{min-width:20px;height:20px;padding:0 6px;border-radius:99px;background:var(--accent);color:#fff;font-size:12px;font-weight:700;display:grid;place-items:center;flex:none}
+.ubadge.at{background:#d9534f}
 </style>
 </head>
 <body>
@@ -252,7 +257,7 @@ dialog.page input:not([type=checkbox]):not([type=range]):not([type=color]):not([
 </div></div>
 <div id="app" hidden>
 <aside>
-  <div class="top"><div class="av" id="meAv"></div><div class="grow"><div class="name" id="meName">…</div><div class="sub">Your profile</div></div><button class="ghost ib" id="editBtn" title="Edit profile"><span data-i="pencil"></span></button><button class="ghost ib" id="acctBtn" title="Account"><span data-i="user"></span></button></div>
+  <div class="top"><div class="av" id="meAv"></div><div class="grow"><div class="name" id="meName">…</div><div class="sub">Your profile</div></div><button class="ghost ib" id="editBtn" title="Edit profile"><span data-i="pencil"></span></button><button class="ghost ib" id="bellBtn" title="Notifications"><span data-i="bell"></span></button><button class="ghost ib" id="acctBtn" title="Account"><span data-i="user"></span></button></div>
   <div id="notifBar" hidden><span class="grow">Get alerts when someone messages you</span><button id="notifBtn" type="button">Turn on</button></div>
   <div class="nav"><button class="navb on" id="navChats" type="button"><span data-i="message"></span>Chats</button><button class="navb" id="navShorts" type="button"><span data-i="film"></span>Shorts</button><button class="navup" id="navUpload" type="button" title="Upload a short"><span data-i="plus" data-s="22"></span></button></div>
   <div class="search"><input id="q" placeholder="Search people" autocomplete="off"></div>
@@ -310,6 +315,7 @@ dialog.page input:not([type=checkbox]):not([type=range]):not([type=color]):not([
   <label for="st">Status</label><input id="st" maxlength="60" placeholder="What are you up to?">
   <div class="sub" id="myId" style="margin-top:12px;cursor:pointer" title="Click to copy"></div>
   <label style="display:flex;gap:10px;align-items:flex-start;margin-top:16px;color:var(--text);font-size:14px"><input type="checkbox" id="rcpt" style="width:auto;margin-top:4px"><span>Read receipts<br><span class="sub" style="white-space:normal">Let others see when you’ve read their messages. If this is off, you won’t see when they read yours either.</span></span></label>
+  <label style="display:flex;gap:10px;align-items:center;margin-top:12px;color:var(--text);font-size:14px"><input type="checkbox" id="sndOn" style="width:auto"> Play a sound for new messages and pings</label>
   <div id="saveMsg" style="color:#d9534f;font-size:13px;min-height:18px;margin-top:10px"></div><div style="display:flex;gap:8px;justify-content:flex-end;margin-top:6px"><button class="ghost" id="cancel" type="button">Cancel</button><button id="save" type="button">Save</button></div>
 </dialog>
 
@@ -383,6 +389,8 @@ film:'<rect width="18" height="18" x="3" y="3" rx="2"/><path d="M7 3v18M17 3v18M
 plus:'<path d="M5 12h14"/><path d="M12 5v14"/>',
 check:'<path d="M20 6 9 17l-5-5"/>',
 pencil:'<path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>',
+bell:'<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>',
+bellOff:'<path d="M8.7 3A6 6 0 0 1 18 8a21.3 21.3 0 0 0 .6 5"/><path d="M17 17H3s3-2 3-9a4.67 4.67 0 0 1 .3-1.7"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/><path d="m2 2 20 20"/>',
 user:'<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>'};
 const IC=(n,z)=>'<svg xmlns="http://www.w3.org/2000/svg" width="'+(z||20)+'" height="'+(z||20)+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+ICP[n]+'</svg>';
 function hydrate(){document.querySelectorAll("[data-i]:not([data-d])").forEach(e=>{e.innerHTML=IC(e.dataset.i,+e.dataset.s||18);e.dataset.d="1";e.style.cssText+=";display:inline-flex;line-height:0"})}
@@ -424,7 +432,7 @@ function renderList(){
   gs.forEach(g=>{
     const r=mk("div","row"+(g.id===activeG?" on":"")),a=mk("div","av");setGroupAv(a,g);
     const w=mk("div","grow");w.append(mk("div","name",g.name),mk("div","sub",g.members.length+" members"));
-    r.append(a,w);r.onclick=()=>openGroup(g.id);box.append(r);
+    const ub=ubd("g:"+g.id);r.append(a,w);if(ub)r.append(ub);r.onclick=()=>openGroup(g.id);box.append(r);
   });
   if(!gs.length)note(raw?"No groups found.":"No groups yet.");
   const all=Object.values(P).filter(p=>p.id!==me&&(p.name+" "+p.username+" "+idOf(p)).toLowerCase().includes(q))
@@ -433,7 +441,7 @@ function renderList(){
   const row=(p,btns)=>{
     const r=mk("div","row"+(p.id===active?" on":"")),a=mk("div","av");avatar(a,p,p.id);
     const w=mk("div","grow");w.append(mk("div","name",p.name),mk("div","sub",p.status_text||p.bio||"@"+p.username));
-    r.append(a,w);(btns||[]).forEach(x=>r.append(x));r.onclick=()=>openChat(p.id);box.append(r);
+    const ub=ubd(p.id);r.append(a,w);if(ub)r.append(ub);(btns||[]).forEach(x=>r.append(x));r.onclick=()=>openChat(p.id);box.append(r);
   };
   const none=()=>box.append(mk("div","empty",q?"No one found.":"No one else has joined yet. Share the link to invite people."));
   if(!FRok){label("People");if(!all.length)none();all.forEach(p=>row(p));return}
@@ -458,7 +466,7 @@ function renderHead(){
   $("bSince").textContent=p.created_at?new Date(p.created_at).toLocaleDateString(undefined,{month:"short",day:"numeric",year:"numeric"}):"Unknown";
 }
 async function openChat(uid){
-  clearAtt();closePages();if(!$("shorts").hidden)closeShorts();$("gpanel").hidden=true;active=uid;activeG=null;msgs=[];otherRead=0;lastMine=null;seen=new Set();typingOn=false;clearTimeout(typingTimer);openTyping(uid);renderList();renderHead();
+  clearAtt();closePages();if(!$("shorts").hidden)closeShorts();clearUnread(uid);$("gpanel").hidden=true;active=uid;activeG=null;msgs=[];otherRead=0;lastMine=null;seen=new Set();typingOn=false;clearTimeout(typingTimer);openTyping(uid);renderList();renderHead();
   $("chatTop").hidden=false;$("f").hidden=false;$("app").classList.add("chat");$("msgs").textContent="";
   const[m,r]=await Promise.all([
     sb.from("messages").select("*").or(`and(sender.eq.${me},recipient.eq.${uid}),and(sender.eq.${uid},recipient.eq.${me})`).order("created_at").limit(300),
@@ -547,7 +555,7 @@ function renderMsgs(){
     if(last){av=mk("div","av sm");avatar(av,pr,m.sender,true);av.onclick=()=>showCard(m.sender)}else av=mk("div","sp");
     const col=mk("div","mcol");
     if(first&&!mine)col.append(mk("div","mname",pr.name||"?"));
-    const pb=parseBody(m),bub=mk("div","b"+(mine?" me":"")+(pb.img?" img":"")+(pb.invite?" invw":""),pb.img||pb.invite?null:pb.text);bub.title=fmtTime(ts);
+    const pb=parseBody(m),bub=mk("div","b"+(mine?" me":"")+(pb.img?" img":"")+(pb.invite?" invw":""),pb.img||pb.invite?null:pb.text);bub.title=fmtTime(ts);if(pb.text!=null)rich(bub,pb.text);if(pb.text&&!mine&&mentionsMe(pb.text,!!activeG))row.classList.add("pinged");
     if(pb.invite)bub.append(inviteCard(pb.invite,mine));
     if(pb.img){
       const im=new Image();im.src=pb.img;im.alt="Photo";im.onclick=()=>openLb(pb.img);
@@ -575,19 +583,82 @@ async function markRead(){
   if(error)wrote[active]=0;
 }
 const canNotify="Notification" in window;
-function syncNotif(){$("notifBar").hidden=!canNotify||Notification.permission!=="default"}
-$("notifBtn").onclick=async()=>{try{await Notification.requestPermission()}catch(e){}syncNotif()};
+function syncNotif(){$("notifBar").hidden=!canNotify||Notification.permission!=="default";bellState()}
+$("notifBtn").onclick=()=>bellClick();$("bellBtn").onclick=()=>bellClick();
+
+const unread={},mentioned={};let actx=null,mActive=false,mItems=[];
+const AC=window.AudioContext||window.webkitAudioContext;
+["pointerdown","keydown"].forEach(ev=>addEventListener(ev,()=>{try{if(AC&&!actx)actx=new AC();if(actx&&actx.state==="suspended")actx.resume()}catch(e){}},{passive:true}));
+const sndOn=()=>{try{return localStorage.getItem("cb_snd")!=="0"}catch(e){return true}};
+function beep(){
+  if(!sndOn()||!actx)return;
+  try{const t=actx.currentTime,o=actx.createOscillator(),g=actx.createGain();o.type="sine";o.frequency.setValueAtTime(880,t);o.frequency.exponentialRampToValueAtTime(1320,t+.12);
+    g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.2,t+.02);g.gain.exponentialRampToValueAtTime(.0001,t+.3);o.connect(g);g.connect(actx.destination);o.start(t);o.stop(t+.32)}catch(e){}
+}
+function setTitle(){const n=Object.values(unread).reduce((x,y)=>x+y,0);document.title=(n?"("+n+") ":"")+"Chatterbox"}
+function ubd(k){const n=unread[k];if(!n)return null;return mk("span","ubadge"+(mentioned[k]?" at":""),(mentioned[k]?"@":"")+(n>99?"99+":n))}
+function clearUnread(k){if(unread[k]){delete unread[k];delete mentioned[k];setTitle();renderList()}}
+function clearActive(){if(document.hasFocus()&&!document.hidden){const k=activeG?"g:"+activeG:active;if(k)clearUnread(k)}}
+addEventListener("focus",clearActive);document.addEventListener("visibilitychange",clearActive);
+function banner(title,body,fn){
+  const e=mk("div","toast");e.style.cssText="pointer-events:auto;cursor:pointer;max-width:340px;text-align:left";
+  e.append(mk("b",null,title),mk("div",null,body.slice(0,110)));e.onclick=()=>{e.remove();fn()};$("toasts").append(e);setTimeout(()=>e.remove(),6000);
+}
+async function sysNotify(title,opts,data,onclick){
+  if(!canNotify||Notification.permission!=="granted")return false;
+  try{const n=new Notification(title,opts);n.onclick=()=>{n.close();if(onclick)onclick()};return true}catch(e){}
+  try{const reg=navigator.serviceWorker&&await navigator.serviceWorker.getRegistration();if(reg){await reg.showNotification(title,Object.assign({data},opts));return true}}catch(e){}
+  return false;
+}
+function bellState(){
+  const b=$("bellBtn");if(!b)return;const on=canNotify&&Notification.permission==="granted";
+  b.innerHTML=IC(on?"bell":"bellOff");
+  b.title=!canNotify?"Notifications not supported here":on?"Notifications on (click to send a test)":Notification.permission==="denied"?"Notifications are blocked":"Turn on notifications";
+}
+async function bellClick(){
+  if(!canNotify){toast("This browser can’t show system notifications. You’ll still get in-app alerts and a sound. On iPhone, add this site to your Home Screen first.",true);return}
+  let perm=Notification.permission;
+  if(perm==="default"){
+    try{perm=await Notification.requestPermission()}catch(e){toast("Your browser blocked the permission prompt. Open the site in its own tab (not inside a frame) and try again.",true)}
+    syncNotif();
+  }
+  if(perm==="denied"){toast("Notifications are blocked for this site. Click the lock icon by the address bar, allow Notifications, then reload.",true);return}
+  if(perm==="granted"){beep();const ok=await sysNotify("Chatterbox",{body:"Notifications are working."+(sndOn()?"":" (sound is off)"),tag:"test"},{},null);toast(ok?"Test notification sent":"The browser couldn’t show it. Check your system notification / Focus settings.",!ok)}
+}
+const unameMap=()=>{const m={};Object.values(P).forEach(p=>{if(p.username)m[String(p.username).toLowerCase()]=p.id});return m};
+const MRE=/@([A-Za-z0-9_.-]{1,30})/g;
+function mentionsMe(t,grp){
+  const um=unameMap();
+  for(const m of String(t).matchAll(MRE)){const k=m[1].toLowerCase().replace(/[.\-]+$/,"");if(um[k]===me||(grp&&k==="everyone"))return true}
+  return false;
+}
+function rich(el,t){
+  el.textContent="";const um=unameMap();let last=0;
+  for(const m of t.matchAll(MRE)){
+    const k=m[1].toLowerCase().replace(/[.\-]+$/,""),id=um[k],ev=k==="everyone"&&!!activeG;
+    if(!id&&!ev)continue;
+    if(m.index>last)el.append(t.slice(last,m.index));
+    const sp=mk("span","mn2"+(id===me||ev?" me":""),t.slice(m.index,m.index+1+k.length));
+    if(id)sp.onclick=()=>showCard(id);
+    el.append(sp);last=m.index+1+k.length;
+  }
+  if(last<t.length)el.append(t.slice(last));
+}
 async function notify(m){
-  if(!canNotify||Notification.permission!=="granted"||m.sender===me)return;
-  const gid=m.group_id||null,here=gid?gid===activeG:m.sender===active;
-  if(here&&document.hasFocus()&&!document.hidden)return;
+  if(m.sender===me)return;
+  const gid=m.group_id||null,key=gid?"g:"+gid:m.sender,here=gid?gid===activeG:m.sender===active;
+  const focused=document.hasFocus()&&!document.hidden;
+  if(here&&focused&&$("shorts").hidden)return;
   let p=P[m.sender];
   if(!p){const r=await sb.from("profiles").select("*").eq("id",m.sender).maybeSingle();if(r.data){P[m.sender]=p=r.data;renderList()}}
-  const g=gid?G[gid]:null,who=(p&&p.name)||"Someone",text=previewText(m.body).slice(0,140);
-  try{
-    const n=new Notification(gid?((g&&g.name)||"Group chat"):((p&&p.name)||"New message"),{body:gid?who+": "+text:text,tag:gid?"grp-"+gid:"msg-"+m.sender,icon:p&&typeof p.avatar_url==="string"&&p.avatar_url.startsWith("http")?p.avatar_url:undefined});
-    n.onclick=()=>{window.focus();if(gid)openGroup(gid);else openChat(m.sender);n.close()};
-  }catch(e){}
+  const g=gid?G[gid]:null,who=(p&&p.name)||"Someone",pb=parseBody(m),pinged=!!(pb.text&&mentionsMe(pb.text,!!gid));
+  const text=previewText(m.body).slice(0,140);
+  unread[key]=(unread[key]||0)+1;if(pinged)mentioned[key]=true;setTitle();renderList();beep();
+  const title=pinged?who+" mentioned you"+(g?" in "+g.name:""):(gid?((g&&g.name)||"Group chat"):who);
+  const body=gid&&!pinged?who+": "+text:text;
+  const open=()=>{window.focus();if(gid)openGroup(gid);else openChat(m.sender)};
+  if(focused)banner(title,body,open);
+  else sysNotify(title,{body,tag:"chat-"+key,icon:p&&typeof p.avatar_url==="string"&&p.avatar_url.startsWith("http")?p.avatar_url:undefined},{g:gid,u:m.sender},open);
 }
 function incoming(m){
   notify(m);
@@ -886,7 +957,7 @@ function renderGroupHead(){
 }
 async function openGroup(gid){
   const g=G[gid];if(!g)return;
-  clearAtt();active=null;activeG=gid;msgs=[];otherRead=0;lastMine=null;seen=new Set();typingOn=false;clearTimeout(typingTimer);
+  clearAtt();clearUnread("g:"+gid);active=null;activeG=gid;msgs=[];otherRead=0;lastMine=null;seen=new Set();typingOn=false;clearTimeout(typingTimer);
   if(tch){sb.removeChannel(tch);tch=null}tReady=false;
   renderList();renderGroupHead();closePages();setGPanel(innerWidth>1000);
   $("prof").hidden=true;$("chatTop").hidden=false;$("f").hidden=false;$("app").classList.add("chat");$("msgs").textContent="";
@@ -1024,10 +1095,7 @@ $("gfile").onchange=e=>{
 };
 
 // ---- friends ----
-function ping(title,body,tag){
-  if(!canNotify||Notification.permission!=="granted"||(document.hasFocus()&&!document.hidden))return;
-  try{new Notification(title,{body,tag})}catch(e){}
-}
+function ping(title,body,tag){beep();if(document.hasFocus()&&!document.hidden)return;sysNotify(title,{body,tag},{},null)}
 async function loadFriends(){
   const r=await sb.from("friendships").select("*");
   if(r.error)return;
@@ -1126,7 +1194,7 @@ addEventListener("pagehide",()=>{if(pch)pch.untrack()});
 
 
 // ---- shorts ----
-const SVMAX=60,SVSIZE=50*1024*1024;
+const SVMAX=60;
 let SV={uid:null,list:[],likes:{},cc:{},cm:{},cur:null,io:null,muted:true,n:0,wt:null};
 const svUrl=u=>typeof u==="string"&&u.startsWith(SUPABASE_URL);
 const sec=x=>(Math.max(0,x)).toFixed(1)+"s";
@@ -1310,7 +1378,6 @@ $("svUc").onclick=()=>$("svUpd").close();
 $("svUpd").addEventListener("close",upReset);
 $("svFile").onchange=()=>{
   const f=$("svFile").files[0];if(!f)return;
-  if(f.size>SVSIZE){$("svUm").textContent="That file is over 50 MB. Pick a smaller one.";return}
   if(UP.url)URL.revokeObjectURL(UP.url);
   UP.file=f;UP.url=URL.createObjectURL(f);$("svFn").textContent=f.name;$("svUm").textContent="";
   const v=$("svPv");v.src=UP.url;
@@ -1339,12 +1406,44 @@ $("svPost").onclick=async()=>{
   const ext=(UP.file.name.split(".").pop()||"mp4").toLowerCase().replace(/[^a-z0-9]/g,"")||"mp4";
   const path=me+"/shorts/"+Date.now()+"."+ext;
   const u=await sb.storage.from("avatars").upload(path,UP.file,{contentType:UP.file.type||"video/mp4"});
-  if(u.error){$("svUm").style.color="#d9534f";$("svUm").textContent="Upload failed: "+u.error.message;b.disabled=false;return}
+  if(u.error){$("svUm").style.color="#d9534f";$("svUm").textContent="Upload failed: "+u.error.message+(/size|large|exceed|413|payload/i.test(u.error.message)?" — your Supabase storage size limit was hit. Raise it in Supabase → Storage → Settings, and on the avatars bucket.":"");b.disabled=false;return}
   const url=sb.storage.from("avatars").getPublicUrl(path).data.publicUrl;
   const r=await sb.from("shorts").insert({user_id:me,video_url:url,caption:$("svCap").value.trim(),trim_start:UP.st,trim_end:UP.en,duration:UP.dur});
   if(r.error){$("svUm").style.color="#d9534f";$("svUm").textContent="Couldn’t save short: "+r.error.message;b.disabled=false;sb.storage.from("avatars").remove([path]);return}
   const wasAll=!$("shorts").hidden&&SV.uid==="all";$("svUpd").close();toast("Short posted");openShorts(wasAll?null:me);
 };
+
+// ---- @mentions ----
+function mentionCheck(){
+  const el=$("in"),before=el.value.slice(0,el.selectionStart),m=/(^|\s)@([A-Za-z0-9_.-]*)$/.exec(before),pop=$("acpop");
+  mActive=false;if(!m)return;
+  const q=m[2].toLowerCase();
+  const pool=activeG&&G[activeG]?G[activeG].members.filter(u=>u!==me).map(u=>P[u]).filter(Boolean):(active&&P[active]?[P[active]]:[]);
+  const items=pool.filter(p=>p.username&&(p.username.toLowerCase().includes(q)||String(p.name).toLowerCase().includes(q))).slice(0,6);
+  if(activeG&&"everyone".startsWith(q))items.unshift({username:"everyone",name:"Notify everyone in this group"});
+  if(!items.length)return;
+  mItems=items;mActive=true;pop.textContent="";
+  items.forEach((p,i)=>{const d=mk("div","ai"+(i?"":" on"),"@"+p.username+"  ·  "+p.name);d.onmousedown=ev=>{ev.preventDefault();pickMention(i)};pop.append(d)});
+  pop.hidden=false;
+}
+function pickMention(i){
+  const el=$("in"),m=/(^|\s)@([A-Za-z0-9_.-]*)$/.exec(el.value.slice(0,el.selectionStart));
+  if(m&&mItems[i])insertAt("@"+mItems[i].username+" ",m.index+m[1].length);
+  hidePops();mActive=false;
+}
+const _oi=$("in").oninput,_ok=$("in").onkeydown;
+$("in").oninput=()=>{_oi();mentionCheck()};
+$("in").onkeydown=e=>{
+  if(mActive&&!$("acpop").hidden&&(e.key==="Tab"||e.key==="Enter")){e.preventDefault();pickMention(0);return}
+  if(e.key==="Escape")mActive=false;
+  _ok(e);
+};
+$("sndOn").checked=sndOn();$("sndOn").onchange=()=>{try{localStorage.setItem("cb_snd",$("sndOn").checked?"1":"0")}catch(e){}};
+if("serviceWorker" in navigator){
+  navigator.serviceWorker.register("sw.js").catch(()=>{});
+  navigator.serviceWorker.addEventListener("message",e=>{const d=e.data&&e.data.open;if(d){if(d.g)openGroup(d.g);else if(d.u)openChat(d.u)}});
+}
+bellState();
 
 // ---- start ----
 async function start(id){
