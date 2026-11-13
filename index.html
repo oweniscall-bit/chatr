@@ -167,6 +167,16 @@ dialog.page>*{max-width:560px;margin-left:auto;margin-right:auto}
 @media(max-width:640px){dialog.page{inset:0!important}}
 #gpanel{width:300px;flex:none;background:var(--panel);border-left:1px solid var(--line);display:flex;flex-direction:column;overflow-y:auto;padding:14px 16px;animation:fade .25s}
 @media(max-width:1000px){#gpanel{position:fixed;inset:0;width:100%;z-index:6;border:0}}
+.b.invw{padding:0;background:transparent;color:var(--text)}
+.inv{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px;width:min(300px,70vw);color:var(--text);white-space:normal}
+.invr{display:flex;align-items:center;gap:10px;margin:10px 0}
+.invb{width:100%}
+.invb:disabled{background:var(--bg);color:var(--mute);cursor:default;filter:none;transform:none}
+.stack{display:flex;flex:none}
+.stack .av{margin-left:-10px;border:2px solid var(--panel)}
+.stack .av:first-child{margin-left:0}
+.chip{display:flex;align-items:center;gap:6px;padding:3px 10px 3px 3px;border-radius:99px;background:var(--bg);border:1px solid var(--line);cursor:pointer;font-size:13px}
+.chip .av{width:22px;height:22px;font-size:11px}
 </style>
 </head>
 <body>
@@ -201,7 +211,9 @@ dialog.page>*{max-width:560px;margin-left:auto;margin-right:auto}
     <div id="bSince"></div>
     <div class="plabel">User ID</div>
     <div id="bId" style="cursor:pointer" title="Click to copy"></div>
+    <div id="bMut"></div>
   </div>
+  <button class="pbtn" id="bFriend" type="button" style="margin-bottom:0"></button>
   <button class="pbtn" id="bFull" type="button">View Full Profile</button>
 </section>
 <section id="gpanel" hidden>
@@ -219,7 +231,7 @@ dialog.page>*{max-width:560px;margin-left:auto;margin-right:auto}
 </section>
 </div>
 <dialog id="acct" class="page"><h3 style="margin:0 0 8px">Account</h3><div id="acctList"></div><button id="outBtn" type="button" style="width:100%;margin-top:12px;background:#d9534f;color:#fff">Log out</button><div style="text-align:right;margin-top:8px"><button class="ghost" id="acctClose" type="button">Close</button></div></dialog>
-<dialog id="card" class="page" style="padding:0"><div id="cBanner" style="height:110px"></div><div style="text-align:center;padding:0 20px 20px"><div class="av" id="cAv" style="width:96px;height:96px;font-size:42px;margin:-48px auto 12px;border:5px solid var(--panel)"></div><div class="name" id="cName" style="font-size:20px"></div><div class="sub" id="cUser"></div><div class="sub" id="cStatus" style="margin-top:6px;white-space:normal"></div><div class="sub" id="cId" style="cursor:pointer;margin-top:4px" title="Click to copy"></div><p id="cBio" style="margin:14px 0;overflow-wrap:anywhere"></p><div style="display:flex;gap:8px;justify-content:center"><button class="ghost" id="cClose" type="button">Close</button><button id="cAct" type="button"></button></div></div></dialog>
+<dialog id="card" class="page" style="padding:0"><div id="cBanner" style="height:110px"></div><div style="text-align:center;padding:0 20px 20px"><div class="av" id="cAv" style="width:96px;height:96px;font-size:42px;margin:-48px auto 12px;border:5px solid var(--panel)"></div><div class="name" id="cName" style="font-size:20px"></div><div class="sub" id="cUser"></div><div class="sub" id="cStatus" style="margin-top:6px;white-space:normal"></div><div class="sub" id="cId" style="cursor:pointer;margin-top:4px" title="Click to copy"></div><p id="cBio" style="margin:14px 0;overflow-wrap:anywhere"></p><div id="cMut" style="margin:0 0 14px;text-align:left"></div><div style="display:flex;gap:8px;justify-content:center"><button class="ghost" id="cClose" type="button">Close</button><button class="ghost" id="cFriend" type="button"></button><button id="cAct" type="button"></button></div></div></dialog>
 <dialog id="crop"><h3 id="cropT" style="margin:0 0 10px">Crop</h3><canvas id="cv"></canvas><label>Zoom (drag the image to move it)</label><input type="range" id="zm" min="1" max="4" step="0.01" value="1" style="padding:0"><div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px"><button class="ghost" id="cropCancel" type="button">Cancel</button><button id="cropOk" type="button">Apply</button></div></dialog>
 <dialog id="dlg" class="page">
   <h3 style="margin:0 0 8px">Your profile</h3>
@@ -253,7 +265,7 @@ const KEY="sb_publishable_vhrBW7onC5ysK7j7LcEtIg_BPzECd1G";
 const DEF=["data:image/png;base64,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", "data:image/png;base64,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", "data:image/png;base64,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"];
 const $=id=>document.getElementById(id);
 const hue=s=>{let h=0;for(const c of String(s))h=(h*31+c.charCodeAt(0))%360;return h};
-let sb,me=null,P={},active=null,msgs=[],otherRead=0,lastMine=null,pimg="",imgBlob=null,mode="login",wrote={},seen=new Set(),tch=null,tReady=false,typingOn=false,typingTimer=null,lastTyping=0,pres={},myState="online",lastAct=Date.now(),pch=null,bimg="",bBlob=null,bcolor="",G={},activeG=null,gsel=new Set(),gsel2=new Set(),gT=null,att=null,gnBlob=null,gnUrl="",gTarget="new";
+let sb,me=null,P={},active=null,msgs=[],otherRead=0,lastMine=null,pimg="",imgBlob=null,mode="login",wrote={},seen=new Set(),tch=null,tReady=false,typingOn=false,typingTimer=null,lastTyping=0,pres={},myState="online",lastAct=Date.now(),pch=null,bimg="",bBlob=null,bcolor="",G={},activeG=null,gsel=new Set(),gsel2=new Set(),gT=null,att=null,gnBlob=null,gnUrl="",gTarget="new",FR={},FRok=false,cardUid=null,MUT={},fT=null;
 const msg=t=>{$("authMsg").textContent=t};
 const myRc=()=>(P[me]||{}).receipts!==false;
 const okUrl=u=>typeof u==="string"&&(u.startsWith("data:image/")||u.startsWith(SUPABASE_URL));
@@ -266,6 +278,7 @@ document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("crop").open&&!$
 const mk=(tag,cls,txt)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(txt!=null)e.textContent=txt;return e};
 
 const idOf=(p,id)=>p&&p.user_number?String(p.user_number):String(id||(p&&p.id)||"").slice(0,8);
+const isFriend=u=>!FRok||!!(FR[u]&&FR[u].status==="accepted");
 const stateOf=id=>id===me?myState:(pres[id]||"offline");
 const stLabel={online:"Online",idle:"Idle",offline:"Offline"};
 function avatar(el,p,id,nd){
@@ -291,31 +304,44 @@ function setGroupAv(el,g){
 }
 function renderList(){
   const raw=$("q").value.toLowerCase(),q=raw.replace(/^#/,""),box=$("list");box.textContent="";
+  const label=t=>{const h=mk("div","slabel");h.append(mk("span",null,t));box.append(h);return h};
+  const note=t=>{const e=mk("div","sub",t);e.style.cssText="padding:4px 14px;white-space:normal";box.append(e)};
   const gs=Object.values(G).filter(g=>String(g.name).toLowerCase().includes(raw)).sort((a,b)=>String(a.name).localeCompare(String(b.name)));
-  const gh=mk("div","slabel");gh.append(mk("span",null,"Groups"));
-  const nb=mk("button","ghost","+ New");nb.type="button";nb.onclick=openNewGroup;gh.append(nb);box.append(gh);
+  const gh=label("Groups");
+  const nb=mk("button","ghost","+ New");nb.type="button";nb.onclick=openNewGroup;gh.append(nb);
   gs.forEach(g=>{
     const r=mk("div","row"+(g.id===activeG?" on":"")),a=mk("div","av");setGroupAv(a,g);
     const w=mk("div","grow");w.append(mk("div","name",g.name),mk("div","sub",g.members.length+" members"));
     r.append(a,w);r.onclick=()=>openGroup(g.id);box.append(r);
   });
-  if(!gs.length){const e=mk("div","sub",raw?"No groups found.":"No groups yet.");e.style.padding="4px 14px";box.append(e)}
-  {const ph=mk("div","slabel");ph.append(mk("span",null,"People"));box.append(ph)}
-  const o=Object.values(P).filter(p=>p.id!==me&&(p.name+" "+p.username+" "+idOf(p)).toLowerCase().includes(q))
+  if(!gs.length)note(raw?"No groups found.":"No groups yet.");
+  const all=Object.values(P).filter(p=>p.id!==me&&(p.name+" "+p.username+" "+idOf(p)).toLowerCase().includes(q))
     .sort((a,b)=>rank[stateOf(a.id)]-rank[stateOf(b.id)]||String(a.name).localeCompare(String(b.name)));
-  if(!o.length){box.append(mk("div","empty",q?"No one found.":"No one else has joined yet. Share the link to invite people."));return}
-  o.forEach(p=>{
+  const btn=(t,fn,cls,title)=>{const b=mk("button",cls,t);b.type="button";b.style.padding="4px 9px";if(title)b.title=title;b.onclick=e=>{e.stopPropagation();fn()};return b};
+  const row=(p,btns)=>{
     const r=mk("div","row"+(p.id===active?" on":"")),a=mk("div","av");avatar(a,p,p.id);
     const w=mk("div","grow");w.append(mk("div","name",p.name),mk("div","sub",p.status_text||p.bio||"@"+p.username));
-    r.append(a,w);r.onclick=()=>openChat(p.id);box.append(r);
-  });
+    r.append(a,w);(btns||[]).forEach(x=>r.append(x));r.onclick=()=>openChat(p.id);box.append(r);
+  };
+  const none=()=>box.append(mk("div","empty",q?"No one found.":"No one else has joined yet. Share the link to invite people."));
+  if(!FRok){label("People");if(!all.length)none();all.forEach(p=>row(p));return}
+  const reqs=all.filter(p=>FR[p.id]&&FR[p.id].status==="pending"&&FR[p.id].incoming);
+  const friends=all.filter(p=>isFriend(p.id));
+  const others=all.filter(p=>!isFriend(p.id)&&!reqs.includes(p));
+  if(reqs.length){label("Friend requests — "+reqs.length);reqs.forEach(p=>row(p,[btn("Accept",()=>acceptFriend(p.id)),btn("Ignore",()=>removeFriend(p.id),"ghost")]))}
+  label("Friends — "+friends.length);
+  if(!friends.length)note(raw?"No friends match.":"No friends yet. Add people below.");
+  friends.forEach(p=>row(p));
+  label("Find people");
+  if(!others.length)none();
+  others.forEach(p=>row(p,[FR[p.id]?btn("Pending",()=>removeFriend(p.id),"ghost","Click to cancel your request"):btn("Add",()=>addFriend(p.id))]));
 }
 function renderHead(){
   const p=P[active];if(!p)return;
   avatar($("pAv"),p,p.id);$("pName").textContent=p.name;$("pBio").textContent=p.status_text||p.bio||"";
   $("prof").hidden=false;bannerStyle($("pbanner"),p,p.id);
   avatar($("bAv"),p,p.id);$("bName").textContent=p.name;$("bUser").textContent="@"+p.username;
-  $("bStatus").textContent=p.status_text||"";$("bStatus").hidden=!p.status_text;$("bId").textContent=idOf(p,p.id);
+  $("bStatus").textContent=p.status_text||"";$("bStatus").hidden=!p.status_text;$("bId").textContent=idOf(p,p.id);friendBtn($("bFriend"),p.id);renderMutual($("bMut"),p.id);
   $("bBio").textContent=p.bio||"";$("bBio").hidden=!p.bio;
   $("bSince").textContent=p.created_at?new Date(p.created_at).toLocaleDateString(undefined,{month:"short",day:"numeric",year:"numeric"}):"Unknown";
 }
@@ -336,16 +362,59 @@ function fmtTime(d){
   if(t.toDateString()===new Date(n-864e5).toDateString())return"Yesterday at "+tm;
   return t.toLocaleDateString([],{month:"numeric",day:"numeric",year:"2-digit"})+", "+tm;
 }
+const INV={};
+async function getInv(id){
+  if(INV[id])return INV[id];
+  const r=await sb.rpc("get_invite",{iid:id}),d=r.data&&r.data[0];
+  if(d)INV[id]=d;return d||null;
+}
+function inviteCard(id,mine){
+  const c=mk("div","inv");c.append(mk("div","sub","Loading invite…"));
+  const draw=d=>{
+    c.textContent="";
+    if(!d){c.append(mk("div","sub","This invite is no longer available."));return}
+    const row=mk("div","invr"),av=mk("div","av"),mid=mk("div","grow"),st=mk("div","stack");
+    setGroupAv(av,{id:d.gid,name:d.gname,avatar_url:d.gavatar});
+    mid.append(mk("div","name",d.gname),mk("div","sub",d.mcount+(Number(d.mcount)===1?" member":" members")));
+    (d.mids||[]).slice(0,3).forEach(u=>{const a=mk("div","av sm");avatar(a,P[u],u,true);st.append(a)});
+    row.append(av,mid,st);
+    const b=mk("button","invb");b.type="button";
+    if(d.is_member){b.textContent="Joined";b.disabled=true}
+    else if(mine){b.textContent="Invite sent";b.disabled=true}
+    else{
+      b.textContent="Join";
+      b.onclick=async()=>{
+        b.disabled=true;const r=await sb.rpc("join_group",{iid:id});
+        if(r.error){toast("Couldn’t join: "+r.error.message,true);b.disabled=false;return}
+        d.is_member=true;d.mcount=Number(d.mcount)+1;toast("Joined “"+d.gname+"”");draw(d);await loadGroups();
+      };
+    }
+    c.append(mk("div","sub",mine?"You sent an invite to":"You’ve been invited to join"),row,b);
+  };
+  getInv(id).then(draw);
+  return c;
+}
+async function sendInvite(gid,u){
+  let inv=await sb.from("group_invites").insert({group_id:gid,invitee:u}).select().single();
+  if(inv.error){
+    if(inv.error.code!=="23505")return inv.error;
+    inv=await sb.from("group_invites").select("*").eq("group_id",gid).eq("invitee",u).single();
+    if(inv.error)return inv.error;
+  }
+  const m=await sb.from("messages").insert({recipient:u,body:"[invite]"+inv.data.id});
+  return m.error||null;
+}
 const IMGP=SUPABASE_URL+"/storage/v1/object/public/avatars/";
 function parseBody(m){
   const b=String(m.body||"");
+  if(b.startsWith("[invite]")){const id=b.slice(8).trim();if(/^[0-9a-f-]{36}$/i.test(id))return{invite:id}}
   if(b.startsWith("[img]")){
     const nl=b.indexOf("\n"),u=b.slice(5,nl<0?undefined:nl),cap=nl<0?"":b.slice(nl+1);
     if(u.startsWith(IMGP)||(m.pending&&u.startsWith("blob:")))return{img:u,cap};
   }
   return{text:b};
 }
-const previewText=b=>{const p=parseBody({body:b});return p.img?"📷 Photo"+(p.cap?": "+p.cap:""):p.text};
+const previewText=b=>{const p=parseBody({body:b});return p.invite?"📨 Group invite":p.img?"📷 Photo"+(p.cap?": "+p.cap:""):p.text};
 function openLb(u){$("lbImg").src=u;$("lb").showModal()}
 $("lb").onclick=()=>$("lb").close();
 function renderMsgs(){
@@ -366,7 +435,8 @@ function renderMsgs(){
     if(last){av=mk("div","av sm");avatar(av,pr,m.sender,true);av.onclick=()=>showCard(m.sender)}else av=mk("div","sp");
     const col=mk("div","mcol");
     if(first&&!mine)col.append(mk("div","mname",pr.name||"?"));
-    const pb=parseBody(m),bub=mk("div","b"+(mine?" me":"")+(pb.img?" img":""),pb.img?null:pb.text);bub.title=fmtTime(ts);
+    const pb=parseBody(m),bub=mk("div","b"+(mine?" me":"")+(pb.img?" img":"")+(pb.invite?" invw":""),pb.img||pb.invite?null:pb.text);bub.title=fmtTime(ts);
+    if(pb.invite)bub.append(inviteCard(pb.invite,mine));
     if(pb.img){
       const im=new Image();im.src=pb.img;im.alt="Photo";im.onclick=()=>openLb(pb.img);
       im.onload=()=>{const bx=$("msgs");if(bx.scrollHeight-bx.scrollTop-bx.clientHeight<420)bx.scrollTop=bx.scrollHeight};
@@ -654,7 +724,7 @@ function showCard(uid){
   $("cBio").textContent=p.bio||(uid===me?"You haven’t added a bio yet.":"No bio yet.");
   const b=$("cAct");b.textContent=uid===me?"Edit profile":"Send message";
   b.onclick=()=>{$("card").close();if(uid===me)openEditor();else openChat(uid)};
-  $("card").show();
+  cardUid=uid;friendBtn($("cFriend"),uid);renderMutual($("cMut"),uid);$("card").show();
 }
 function openAcct(){
   const p=P[me]||{},box=$("acctList");box.textContent="";
@@ -715,13 +785,22 @@ async function openGroup(gid){
 }
 function drawPick(box,qEl,sel,excl){
   const q=qEl.value.toLowerCase(),skip=new Set([me,...(excl||[])]);box.textContent="";
-  Object.values(P).filter(p=>!skip.has(p.id)&&(p.name+" "+p.username).toLowerCase().includes(q)).forEach(p=>{
+  const all=Object.values(P).filter(p=>!skip.has(p.id)&&(p.name+" "+p.username).toLowerCase().includes(q));
+  const mkRow=p=>{
     const r=mk("div","row"),a=mk("div","av"),w=mk("div","grow"),c=mk("input");
     c.type="checkbox";c.style.width="auto";c.checked=sel.has(p.id);avatar(a,p,p.id,true);
     w.append(mk("div","name",p.name),mk("div","sub","@"+p.username));r.append(a,w,c);
     r.onclick=e=>{if(e.target!==c)c.checked=!c.checked;if(c.checked)sel.add(p.id);else sel.delete(p.id)};
     box.append(r);
-  });
+  };
+  const sec=(t,list,hint)=>{
+    if(!list.length)return;
+    const h=mk("div","slabel",t);h.style.padding="8px 4px 2px";box.append(h);
+    if(hint){const e=mk("div","sub",hint);e.style.cssText="white-space:normal;padding:0 4px 4px";box.append(e)}
+    list.forEach(mkRow);
+  };
+  sec("Friends",all.filter(p=>isFriend(p.id)));
+  sec("Not friends",all.filter(p=>!isFriend(p.id)),"Only friends can be added directly. These people get an invite link in a DM instead.");
 }
 function openNewGroup(){
   gsel=new Set();gnBlob=null;gnUrl="";$("gname").value="";$("gq").value="";$("gmsg").textContent="";drawGnAv();
@@ -737,9 +816,12 @@ $("gCreate").onclick=async()=>{
   try{
     const r=await sb.from("groups").insert({name}).select().single();
     if(r.error)throw r.error;
-    const m=await sb.from("group_members").insert([me,...gsel].map(u=>({group_id:r.data.id,user_id:u})));
+    const ids=[...gsel],fr=ids.filter(isFriend),non=ids.filter(u=>!isFriend(u));
+    const m=await sb.from("group_members").insert([me,...fr].map(u=>({group_id:r.data.id,user_id:u})));
     if(m.error)throw m.error;
     if(gnBlob){const pr=await uploadGroupPhoto(r.data.id,gnBlob,gnUrl);if(pr.error)console.warn("Group photo failed:",pr.error.message)}
+    let sent=0;for(const u of non){if(!(await sendInvite(r.data.id,u)))sent++}
+    if(sent)toast("Invite"+(sent>1?"s":"")+" sent to "+sent+(sent>1?" people":" person"));
     $("gdlg").close();await loadGroups();openGroup(r.data.id);
   }catch(e){
     const t=(e&&e.message)||String(e);
@@ -775,9 +857,16 @@ function renderGroupInfo(){
 $("gi_q").oninput=()=>{const g=G[activeG];if(g)drawPick($("gi_pick"),$("gi_q"),gsel2,g.members)};
 $("gi_add").onclick=async()=>{
   const g=G[activeG],sm=$("gi_msg");sm.textContent="";if(!g||!gsel2.size)return;
-  const r=await sb.from("group_members").insert([...gsel2].map(u=>({group_id:g.id,user_id:u})));
-  if(r.error){sm.textContent="Couldn’t add: "+r.error.message;return}
+  const ids=[...gsel2],fr=ids.filter(isFriend),non=ids.filter(u=>!isFriend(u));
+  if(fr.length){
+    const r=await sb.from("group_members").insert(fr.map(u=>({group_id:g.id,user_id:u})));
+    if(r.error){sm.textContent="Couldn’t add: "+r.error.message;return}
+  }
+  let sent=0;for(const u of non){if(!(await sendInvite(g.id,u)))sent++}
   gsel2=new Set();await loadGroups();renderGroupInfo();
+  const bits=[];if(fr.length)bits.push(fr.length+" added");if(sent)bits.push(sent+" invited");
+  if(bits.length)toast(bits.join(" · "));
+  if(sent<non.length)sm.textContent="Some invites couldn’t be sent.";
 };
 $("gi_save").onclick=async()=>{
   const g=G[activeG],sm=$("gi_msg"),name=$("gi_name").value.trim();sm.textContent="";if(!g||!name)return;
@@ -822,6 +911,89 @@ $("gfile").onchange=e=>{
   });
 };
 
+// ---- friends ----
+function ping(title,body,tag){
+  if(!canNotify||Notification.permission!=="granted"||(document.hasFocus()&&!document.hidden))return;
+  try{new Notification(title,{body,tag})}catch(e){}
+}
+async function loadFriends(){
+  const r=await sb.from("friendships").select("*");
+  if(r.error)return;
+  FRok=true;const n={};
+  (r.data||[]).forEach(x=>{const o=x.requester===me?x.addressee:x.requester;n[o]={id:x.id,status:x.status,incoming:x.addressee===me}});
+  FR=n;MUT={};renderList();
+  if(active)friendBtn($("bFriend"),active);
+  if($("card").open&&cardUid){friendBtn($("cFriend"),cardUid);renderMutual($("cMut"),cardUid)}
+  if(active)renderMutual($("bMut"),active);
+  if(!$("gpanel").hidden)renderGroupInfo();
+  if($("gdlg").open)drawPick($("gpick"),$("gq"),gsel);
+}
+function loadFriendsSoon(){clearTimeout(fT);fT=setTimeout(loadFriends,250)}
+function startFriendLive(){
+  sb.channel("live-friends").on("postgres_changes",{event:"*",schema:"public",table:"friendships"},x=>{
+    const n=x.new||{},nm=id=>(P[id]||{}).name||"Someone";
+    if(x.eventType==="INSERT"&&n.addressee===me){toast(nm(n.requester)+" sent you a friend request");ping("Friend request",nm(n.requester)+" wants to be your friend","fr-"+n.requester)}
+    if(x.eventType==="UPDATE"&&n.status==="accepted"&&n.requester===me){toast(nm(n.addressee)+" accepted your friend request");ping("Friend request accepted",nm(n.addressee)+" is now your friend","fa-"+n.addressee)}
+    loadFriendsSoon();
+  }).subscribe();
+}
+async function addFriend(u){
+  const r=await sb.from("friendships").insert({addressee:u});
+  if(r.error)toast(r.error.code==="23505"?"There’s already a request between you two.":/relation|schema cache|does not exist/i.test(r.error.message)?"Friends aren’t set up in your database yet. Run the friends SQL in Supabase.":"Couldn’t send request: "+r.error.message,true);
+  else toast("Friend request sent to "+((P[u]||{}).name||"them"));
+  await loadFriends();
+}
+async function acceptFriend(u){
+  const f=FR[u];if(!f)return;
+  const r=await sb.from("friendships").update({status:"accepted"}).eq("id",f.id).select();
+  if(r.error||!r.data||!r.data.length)toast("Couldn’t accept that request.",true);
+  else toast("You’re now friends with "+((P[u]||{}).name||"them"));
+  await loadFriends();
+}
+async function removeFriend(u){
+  const f=FR[u];if(!f)return;
+  const r=await sb.from("friendships").delete().eq("id",f.id).select();
+  if(r.error||!r.data||!r.data.length)toast("Couldn’t update that.",true);
+  await loadFriends();
+}
+function friendBtn(btn,uid){
+  if(!btn)return;
+  if(uid===me||!FRok){btn.hidden=true;return}
+  btn.hidden=false;btn.disabled=false;delete btn.dataset.arm;
+  const f=FR[uid];
+  if(!f){btn.textContent="Add friend";btn.onclick=()=>addFriend(uid)}
+  else if(f.status==="accepted"){
+    btn.textContent="Friends ✓";
+    btn.onclick=()=>{
+      if(btn.dataset.arm==="1"){removeFriend(uid);return}
+      btn.dataset.arm="1";btn.textContent="Click again to unfriend";
+      setTimeout(()=>{if(btn.dataset.arm==="1")friendBtn(btn,uid)},3000);
+    };
+  }
+  else if(f.incoming){btn.textContent="Accept friend request";btn.onclick=()=>acceptFriend(uid)}
+  else{btn.textContent="Cancel friend request";btn.onclick=()=>removeFriend(uid)}
+}
+function renderMutual(el,uid){
+  if(!el)return;
+  el.dataset.u=uid;
+  if(uid===me||!FRok){el.textContent="";el.hidden=true;return}
+  el.hidden=false;
+  const draw=ids=>{
+    if(el.dataset.u!==uid)return;
+    el.textContent="";el.append(mk("div","plabel","Mutual friends — "+ids.length));
+    if(!ids.length){el.append(mk("div","sub","No mutual friends yet."));return}
+    const wrap=mk("div");wrap.style.cssText="display:flex;flex-wrap:wrap;gap:6px";
+    ids.slice(0,12).forEach(u=>{
+      const c=mk("div","chip"),a=mk("div","av");avatar(a,P[u],u,true);
+      c.append(a,mk("span",null,(P[u]||{}).name||"?"));c.onclick=()=>showCard(u);wrap.append(c);
+    });
+    el.append(wrap);
+  };
+  const c=MUT[uid];
+  if(c&&Date.now()-c.t<6e4){draw(c.ids);return}
+  sb.rpc("mutual_friends",{other:uid}).then(r=>{const ids=r.error?[]:(r.data||[]);MUT[uid]={ids,t:Date.now()};draw(ids)});
+}
+
 // ---- presence (online / idle / offline) ----
 function updDots(){document.querySelectorAll(".pd[data-u]").forEach(d=>{const t=stateOf(d.dataset.u);d.className="pd "+t;d.title=stLabel[t]})}
 function setMyState(t){if(t===myState)return;myState=t;if(pch)pch.track({state:t});updDots()}
@@ -845,7 +1017,7 @@ async function start(id){
   me=id;$("auth").hidden=true;$("app").hidden=false;syncNotif();startPresence();
   const{data,error}=await sb.from("profiles").select("*");
   if(error){$("list").textContent="Couldn’t load people.";return}
-  P={};data.forEach(p=>P[p.id]=p);renderMe();renderList();loadGroups();startGroupLive();
+  P={};data.forEach(p=>P[p.id]=p);renderMe();renderList();loadGroups();startGroupLive();loadFriends();startFriendLive();
   sb.channel("live")
     .on("postgres_changes",{event:"INSERT",schema:"public",table:"messages",filter:"recipient=eq."+me},x=>incoming(x.new))
     .on("postgres_changes",{event:"INSERT",schema:"public",table:"messages",filter:"sender=eq."+me},x=>incoming(x.new))
