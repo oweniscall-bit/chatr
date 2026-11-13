@@ -245,6 +245,23 @@ dialog.page input:not([type=checkbox]):not([type=range]):not([type=color]):not([
 .mrow.pinged .b{box-shadow:0 0 0 2px var(--accent)}
 .ubadge{min-width:20px;height:20px;padding:0 6px;border-radius:99px;background:var(--accent);color:#fff;font-size:12px;font-weight:700;display:grid;place-items:center;flex:none}
 .ubadge.at{background:#d9534f}
+#incoming{position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:30;display:flex;align-items:center;gap:12px;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:12px 14px;box-shadow:0 12px 40px rgba(0,0,0,.35);width:min(380px,94vw);animation:pop .2s ease-out}
+#incoming .av{width:44px;height:44px}
+.clb{width:46px;height:46px;border-radius:50%;padding:0;display:grid;place-items:center;background:var(--bg);color:var(--text);border:1px solid var(--line);flex:none}
+.clb.on{background:var(--text);color:var(--panel)}
+.clb.ok{background:#2f9e5b;color:#fff;border:0}.clb.no{background:#d9534f;color:#fff;border:0}
+#call{position:fixed;right:16px;bottom:16px;width:min(400px,calc(100vw - 32px));z-index:25;background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:18px;box-shadow:0 16px 50px rgba(0,0,0,.4);overflow:hidden;display:flex;flex-direction:column}
+#call.big{inset:16px 16px 16px 316px;width:auto}
+@media(max-width:640px){#call.big{inset:8px}}
+#clBar{display:flex;align-items:center;gap:8px;padding:12px;flex-wrap:wrap}
+#clStage{display:none;flex:1;min-height:0;background:#000;padding:6px;gap:6px;flex-wrap:wrap;justify-content:center;align-content:stretch}
+#call.big #clStage{display:flex}
+.ctile{position:relative;flex:1 1 45%;min-width:240px;background:#111;border-radius:10px;overflow:hidden;display:grid;place-items:center}
+.ctile video{width:100%;height:100%;object-fit:contain;max-height:100%}
+.ctile span{position:absolute;left:8px;bottom:8px;background:rgba(0,0,0,.6);color:#fff;font-size:12px;padding:2px 8px;border-radius:8px}
+#clPeople{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}
+#clPeople .av{width:34px;height:34px;font-size:14px;transition:box-shadow .12s}
+#clPeople .av.talk{box-shadow:0 0 0 3px #3ba55d}
 </style>
 </head>
 <body>
@@ -264,7 +281,7 @@ dialog.page input:not([type=checkbox]):not([type=range]):not([type=color]):not([
   <div id="list"><div class="empty">Loading…</div></div>
 </aside>
 <main>
-  <div class="top" id="chatTop" hidden><button class="ghost" id="back"><span data-i="arrowleft"></span></button><div class="av" id="pAv"></div><div class="grow"><div class="name" id="pName"></div><div class="sub" id="pBio"></div></div></div>
+  <div class="top" id="chatTop" hidden><button class="ghost" id="back"><span data-i="arrowleft"></span></button><div class="av" id="pAv"></div><div class="grow"><div class="name" id="pName"></div><div class="sub" id="pBio"></div></div><button class="ghost ib" id="callBtn" title="Start a voice call"><span data-i="phone" data-s="20"></span></button></div>
   <div id="msgs"><div class="empty">Pick someone from the list to start a conversation.</div></div>
   <form id="f" hidden><button type="button" id="emoBtn" class="ghost" style="font-size:20px;padding:6px 10px"><span data-i="smile" data-s="22"></span></button><button type="button" id="attBtn" class="ghost" title="Send an image" style="font-size:20px;padding:6px 10px"><span data-i="clip" data-s="22"></span></button><input type="file" id="afile" accept="image/*" hidden><textarea id="in" rows="1" placeholder="Write a message…" style="resize:none"></textarea><button>Send</button><div id="attPrev" class="att" hidden></div><div id="emopop" class="pop" hidden><input id="eq" placeholder="Find the perfect emoji" autocomplete="off"><div class="eg" id="eg"></div></div><div id="acpop" class="pop" hidden></div></form>
 </main>
@@ -335,7 +352,7 @@ dialog.page input:not([type=checkbox]):not([type=range]):not([type=color]):not([
  <input type="file" id="svFile" accept="video/*,.mov,.mkv,.avi,.3gp,.m4v,.wmv,.flv,.mpg,.mpeg,.ogv" hidden>
  <button class="ghost" id="svPick" type="button" style="padding-left:0">Choose a video</button><span class="sub" id="svFn"></span>
  <div id="svTrim" hidden>
-  <video id="svPv" playsinline muted></video>
+  <video id="svPv" playsinline></video>
   <div class="sub" id="svWarn" style="white-space:normal;color:#d9534f"></div>
   <label>Trim start: <span id="svSt"></span></label><input type="range" id="svS" min="0" max="1" step="0.1" value="0" style="padding:0">
   <label>Trim end: <span id="svEt"></span></label><input type="range" id="svE" min="0" max="1" step="0.1" value="1" style="padding:0">
@@ -345,6 +362,15 @@ dialog.page input:not([type=checkbox]):not([type=range]):not([type=color]):not([
  <div id="svUm" style="color:#d9534f;font-size:13px;min-height:18px;margin-top:8px"></div>
  <div style="display:flex;gap:8px;justify-content:flex-end"><button class="ghost" id="svUc" type="button">Cancel</button><button id="svPost" type="button" disabled>Post</button></div>
 </dialog>
+<div id="incoming" hidden><div class="av" id="inAv"></div><div class="grow"><div class="name" id="inName"></div><div class="sub" id="inSub"></div></div><button class="clb ok" id="inYes" type="button" title="Accept"><span data-i="phone" data-s="22"></span></button><button class="clb no" id="inNo" type="button" title="Decline"><span data-i="phoneOff" data-s="22"></span></button></div>
+<div id="call" hidden>
+ <div id="clStage"></div>
+ <div id="clBar"><div class="grow" style="min-width:140px"><div class="name" id="clTitle"></div><div class="sub" id="clSub"></div><div id="clPeople"></div></div>
+  <button class="clb" id="clMin" type="button" title="Shrink / expand screen" hidden><span data-i="expand" data-s="20"></span></button>
+  <button class="clb" id="clMic" type="button" title="Mute"><span data-i="mic" data-s="22"></span></button>
+  <button class="clb" id="clScr" type="button" title="Share your screen (with audio)"><span data-i="monitor" data-s="22"></span></button>
+  <button class="clb no" id="clEnd" type="button" title="Leave call"><span data-i="phoneOff" data-s="22"></span></button></div>
+</div>
 <div id="toasts"></div>
 <dialog id="lb" style="padding:0;border:0;background:transparent;width:auto;max-width:96vw"><img id="lbImg" alt="" style="display:block;max-width:94vw;max-height:90vh;border-radius:12px;cursor:zoom-out"></dialog>
 <input type="file" id="gfile" accept="image/*,.heic,.heif,.avif,.bmp,.svg,.tiff" hidden>
@@ -389,6 +415,13 @@ film:'<rect width="18" height="18" x="3" y="3" rx="2"/><path d="M7 3v18M17 3v18M
 plus:'<path d="M5 12h14"/><path d="M12 5v14"/>',
 check:'<path d="M20 6 9 17l-5-5"/>',
 pencil:'<path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>',
+phone:'<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>',
+phoneOff:'<path d="M10.68 13.31a16 16 0 0 0 3.41 2.6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7 2 2 0 0 1 1.72 2v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.42 19.42 0 0 1-3.33-2.67m-2.67-3.34a19.79 19.79 0 0 1-3.07-8.63A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91"/><path d="m22 2-20 20"/>',
+mic:'<path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><path d="M12 19v3"/>',
+micOff:'<path d="m2 2 20 20"/><path d="M18.89 13.23A7.12 7.12 0 0 0 19 12v-2"/><path d="M5 10v2a7 7 0 0 0 12 5"/><path d="M15 9.34V5a3 3 0 0 0-5.68-1.33"/><path d="M9 9v3a3 3 0 0 0 5.12 2.12"/><path d="M12 19v3"/>',
+monitor:'<rect width="20" height="14" x="2" y="3" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/>',
+monitorOff:'<path d="M17 17H4a2 2 0 0 1-2-2V5c0-1.5 1-2 1-2"/><path d="M22 15V5a2 2 0 0 0-2-2H9"/><path d="M8 21h8"/><path d="M12 17v4"/><path d="m2 2 20 20"/>',
+expand:'<path d="M15 3h6v6"/><path d="M9 21H3v-6"/><path d="m21 3-7 7"/><path d="m3 21 7-7"/>',
 bell:'<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>',
 bellOff:'<path d="M8.7 3A6 6 0 0 1 18 8a21.3 21.3 0 0 0 .6 5"/><path d="M17 17H3s3-2 3-9a4.67 4.67 0 0 1 .3-1.7"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/><path d="m2 2 20 20"/>',
 user:'<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>'};
@@ -1195,7 +1228,7 @@ addEventListener("pagehide",()=>{if(pch)pch.untrack()});
 
 // ---- shorts ----
 const SVMAX=60;
-let SV={uid:null,list:[],likes:{},cc:{},cm:{},cur:null,io:null,muted:true,n:0,wt:null};
+let SV={uid:null,list:[],likes:{},cc:{},cm:{},cur:null,io:null,muted:false,n:0,wt:null};
 const svUrl=u=>typeof u==="string"&&u.startsWith(SUPABASE_URL);
 const sec=x=>(Math.max(0,x)).toFixed(1)+"s";
 function svVideos(){return [...document.querySelectorAll("#svFeed video")]}
@@ -1206,7 +1239,7 @@ function svProfile(u){
   $("svName").textContent=p.name||"";$("svUser").textContent="@"+(p.username||"");$("svBio").textContent=p.bio||"";$("svBio").hidden=!p.bio;$("svMsgBtn").hidden=u===me;
 }
 async function openShorts(uid){
-  closePages();const key=uid||"all";SV.uid=key;SV.cur=null;
+  closePages();const key=uid||"all";SV.uid=key;SV.cur=null;$("svMute").innerHTML=IC(SV.muted?"volx":"vol");
   svProfile(uid||null);
   $("svUpBtn").hidden=!(uid===me||!uid);
   $("navShorts").classList.toggle("on",!uid);$("navChats").classList.toggle("on",!!uid);
@@ -1258,7 +1291,7 @@ function svItem(sh){
     fill.style.width=e>st?Math.min(100,Math.max(0,(v.currentTime-st)/(e-st)*100))+"%":"0";
   });
   v.addEventListener("error",()=>{if(!el.querySelector(".svnone"))el.append(mk("div","svnone","This video can’t be played in your browser."))});
-  v.onclick=()=>{v.paused?v.play().catch(()=>{}):v.pause()};
+  v.onclick=()=>{if(SV.muted){setMuted(false);if(v.paused)v.play().catch(()=>{});return}v.paused?v.play().catch(()=>{}):v.pause()};
   const rail=mk("div","svrail");
   const lb=ib("heart");lb.className="lk";lb.onclick=()=>svLike(sh.id);
   const lc=mk("div","lc","0");
@@ -1276,7 +1309,8 @@ function svPlay(el,v){
   const id=el.dataset.id,sh=SV.list.find(x=>x.id===id);if(!sh)return;
   const st=Number(sh.trim_start)||0,en=Number(sh.trim_end)||0;
   if(v.currentTime<st-.1||(en>st&&v.currentTime>=en))v.currentTime=st;
-  v.muted=SV.muted;v.play().catch(()=>{});
+  v.muted=SV.muted;
+  v.play().catch(()=>{if(!SV.muted){setMuted(true);v.play().catch(()=>{});toast("Tap the speaker to turn sound on")}});
   if(SV.cur!==id){SV.cur=id;if(SV.uid==="all")svProfile(sh.user_id);svLoadCom(id)}
 }
 function paintLike(id){
@@ -1346,7 +1380,8 @@ $("svFeed").addEventListener("scroll",()=>{
 },{passive:true});
 $("svBack").onclick=closeShorts;
 $("svSheetX").onclick=()=>$("svSide").classList.remove("open");
-$("svMute").onclick=()=>{SV.muted=!SV.muted;$("svMute").innerHTML=IC(SV.muted?"volx":"vol");svVideos().forEach(v=>v.muted=SV.muted)};
+function setMuted(m){SV.muted=m;$("svMute").innerHTML=IC(m?"volx":"vol");svVideos().forEach(v=>v.muted=m)}
+$("svMute").onclick=()=>{setMuted(!SV.muted);const v=svVideos().find(x=>!x.paused);if(v&&!SV.muted)v.play().catch(()=>{})};
 $("svMsgBtn").onclick=()=>{const u=$("svSide").dataset.u;closeShorts();if(u)openChat(u)};
 $("svAv").onclick=()=>{const u=$("svSide").dataset.u;if(u){closeShorts();showCard(u)}};
 $("navChats").onclick=()=>{if(!$("shorts").hidden)closeShorts()};
@@ -1385,7 +1420,7 @@ $("svFile").onchange=()=>{
     if(!isFinite(v.duration)||v.duration<=0){$("svUm").textContent="Couldn’t read this video’s length. Try an MP4 or WebM.";return}
     UP.dur=v.duration;UP.st=0;UP.en=Math.min(v.duration,SVMAX);
     for(const k of ["svS","svE"]){$(k).max=UP.dur.toFixed(1)}
-    $("svTrim").hidden=false;upDraw();v.currentTime=0;v.play().catch(()=>{});
+    $("svTrim").hidden=false;upDraw();v.currentTime=0;v.muted=false;v.play().catch(()=>{v.muted=true;v.play().catch(()=>{})});
   };
   v.onerror=()=>{$("svUm").textContent="Your browser can’t open this video format. Try MP4, MOV or WebM.";$("svTrim").hidden=true;$("svPost").disabled=true};
   v.ontimeupdate=()=>{if(UP.en&&v.currentTime>=UP.en-.05){v.currentTime=UP.st;v.play().catch(()=>{})}};
@@ -1412,6 +1447,216 @@ $("svPost").onclick=async()=>{
   if(r.error){$("svUm").style.color="#d9534f";$("svUm").textContent="Couldn’t save short: "+r.error.message;b.disabled=false;sb.storage.from("avatars").remove([path]);return}
   const wasAll=!$("shorts").hidden&&SV.uid==="all";$("svUpd").close();toast("Short posted");openShorts(wasAll?null:me);
 };
+
+// ---- calls (WebRTC; signalling over Supabase Realtime broadcast) ----
+const ICE=[{urls:["stun:stun.l.google.com:19302","stun:stun1.l.google.com:19302"]}];
+let CALL=null,INC=null;const TX={};
+function txChan(to){
+  if(!TX[to]){const ch=sb.channel("calls-"+to);TX[to]={ch,ready:new Promise(res=>ch.subscribe(st=>{if(st==="SUBSCRIBED")res()}))}}
+  return TX[to];
+}
+async function sig(to,p){const t=txChan(to);await t.ready;t.ch.send({type:"broadcast",event:"sig",payload:Object.assign({from:me,to},p)})}
+function startCalls(){
+  sb.channel("calls-"+me).on("broadcast",{event:"sig"},e=>{try{onSig(e.payload)}catch(x){console.warn(x)}}).subscribe();
+  addEventListener("pagehide",()=>{if(CALL)endCall()});
+}
+function ringOnce(){
+  if(!actx)return;
+  try{const t=actx.currentTime;[0,.28].forEach((d,i)=>{const o=actx.createOscillator(),g=actx.createGain();o.type="sine";o.frequency.value=i?523:659;g.gain.setValueAtTime(.0001,t+d);g.gain.exponentialRampToValueAtTime(.18,t+d+.02);g.gain.exponentialRampToValueAtTime(.0001,t+d+.24);o.connect(g);g.connect(actx.destination);o.start(t+d);o.stop(t+d+.26)})}catch(e){}
+}
+function clearInc(){if(INC){clearInterval(INC.ri);clearTimeout(INC.to)}INC=null;$("incoming").hidden=true}
+function onSig(p){
+  if(!p||p.to!==me)return;
+  const t=p.t;
+  if(t==="ring"){
+    if(CALL&&CALL.room===p.room)return;
+    if(CALL||INC){sig(p.from,{t:"busy",room:p.room});return}
+    const members=Array.isArray(p.members)?p.members:[p.from,me];
+    INC={room:p.room,from:p.from,kind:p.kind,gid:p.gid,members,title:p.kind==="group"?(p.gname||"Group call"):((P[p.from]||{}).name||p.name||"Call")};
+    const who=(P[p.from]||{}).name||p.name||"Someone";
+    avatar($("inAv"),P[p.from],p.from,true);$("inName").textContent=p.kind==="group"?INC.title:who;$("inSub").textContent=p.kind==="group"?who+" started a voice call":"Incoming voice call…";
+    $("incoming").hidden=false;ringOnce();INC.ri=setInterval(ringOnce,1800);INC.to=setTimeout(clearInc,45000);
+    if(!(document.hasFocus()&&!document.hidden))sysNotify("Incoming call",{body:who+" is calling you",tag:"call",requireInteraction:true},{},()=>window.focus());
+    return;
+  }
+  if(t==="cancel"){if(INC&&INC.room===p.room){clearInc();toast("Missed call from "+((P[p.from]||{}).name||"someone"))}return}
+  if(!CALL||CALL.room!==p.room)return;
+  if(t==="decline"||t==="busy"){
+    CALL.ringing.delete(p.from);renderPeople();
+    toast(((P[p.from]||{}).name||"They")+(t==="busy"?" is in another call":" declined the call"));
+    if(CALL.kind==="dm")endCall();return;
+  }
+  if(t==="hello"){CALL.ringing.delete(p.from);peer(p.from);return}
+  if(t==="bye"){dropPeer(p.from);return}
+  if(t==="desc"||t==="ice")onDesc(p.from,p.desc,p.cand);
+}
+async function newCall(base){
+  let ms;
+  try{ms=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}})}
+  catch(e){toast("Couldn’t access your microphone. Allow it in your browser’s site settings (and use https).",true);return false}
+  if(CALL){ms.getTracks().forEach(t=>t.stop());return false}
+  try{if(AC&&!actx)actx=new AC();if(actx&&actx.state==="suspended")actx.resume()}catch(e){}
+  CALL=Object.assign({local:ms,peers:{},tiles:{},av:{},mon:[],ringing:new Set(),muted:false,screen:null,started:0,live:false,mini:false},base);
+  $("call").hidden=false;$("call").classList.remove("big");$("clStage").textContent="";
+  $("clScr").hidden=!(navigator.mediaDevices&&navigator.mediaDevices.getDisplayMedia);
+  btnState();renderPeople();watch(me,ms);
+  CALL.tick=setInterval(()=>{
+    if(!CALL)return;
+    const s=CALL.live?Math.floor((Date.now()-CALL.started)/1e3):0;
+    $("clSub").textContent=CALL.live?"Connected · "+String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0"):(CALL.ringing.size?"Ringing…":"Connecting…");
+  },500);
+  return true;
+}
+async function startCall(o){
+  const room=crypto.randomUUID?crypto.randomUUID():Date.now()+"-"+Math.random(),g=o.gid?G[o.gid]:null;
+  const members=o.gid?(g?g.members.slice():[]):[me,o.uid];
+  if(members.filter(u=>u!==me).length===0){toast("There’s no one else in this group to call.");return}
+  if(!(await newCall({room,kind:o.kind,gid:o.gid||null,members,title:o.gid?(g?g.name:"Group call"):((P[o.uid]||{}).name||"Call")})))return;
+  members.filter(u=>u!==me).forEach(u=>{CALL.ringing.add(u);sig(u,{t:"ring",room,kind:o.kind,gid:o.gid||null,name:(P[me]||{}).name||"Someone",gname:g?g.name:"",members})});
+  renderPeople();
+  CALL.ringTimer=setTimeout(()=>{
+    if(!CALL||CALL.room!==room)return;
+    if(!Object.keys(CALL.peers).length){toast("No answer");endCall()}else{CALL.ringing.clear();renderPeople()}
+  },45000);
+}
+async function acceptCall(){
+  const i=INC;if(!i)return;clearInc();
+  if(!(await newCall({room:i.room,kind:i.kind,gid:i.gid,members:i.members,title:i.title})))return;
+  i.members.filter(u=>u!==me).forEach(u=>sig(u,{t:"hello",room:i.room}));
+}
+function declineCall(){const i=INC;if(!i)return;clearInc();sig(i.from,{t:"decline",room:i.room})}
+function peer(uid){
+  if(!CALL)return null;
+  let st=CALL.peers[uid];if(st)return st;
+  const room=CALL.room,pc=new RTCPeerConnection({iceServers:ICE});
+  st=CALL.peers[uid]={pc,polite:me>uid,making:false,ignore:false,q:[],send:{}};
+  CALL.local.getTracks().forEach(t=>pc.addTrack(t,CALL.local));
+  if(CALL.screen)CALL.screen.getTracks().forEach(t=>{st.send[t.id]=pc.addTrack(t,CALL.screen)});
+  pc.onicecandidate=e=>{if(e.candidate)sig(uid,{t:"ice",room,cand:e.candidate.toJSON()})};
+  pc.onnegotiationneeded=async()=>{
+    try{st.making=true;await pc.setLocalDescription();sig(uid,{t:"desc",room,desc:pc.localDescription.toJSON()})}
+    catch(e){console.warn(e)}finally{st.making=false}
+  };
+  pc.ontrack=e=>addRemote(uid,e);
+  pc.onconnectionstatechange=()=>{
+    if(!CALL||CALL.peers[uid]!==st)return;
+    if(pc.connectionState==="connected"&&!CALL.live){CALL.live=true;CALL.started=Date.now();clearTimeout(CALL.ringTimer)}
+    if(pc.connectionState==="failed"||pc.connectionState==="closed")dropPeer(uid);
+    if(pc.connectionState==="disconnected")setTimeout(()=>{if(CALL&&CALL.peers[uid]===st&&pc.connectionState==="disconnected")dropPeer(uid)},9000);
+  };
+  renderPeople();return st;
+}
+async function onDesc(from,desc,cand){
+  const st=peer(from);if(!st)return;const pc=st.pc,room=CALL.room;
+  try{
+    if(desc){
+      const collision=desc.type==="offer"&&(st.making||pc.signalingState!=="stable");
+      st.ignore=!st.polite&&collision;if(st.ignore)return;
+      await pc.setRemoteDescription(desc);
+      for(const c of st.q.splice(0)){try{await pc.addIceCandidate(c)}catch(e){}}
+      if(desc.type==="offer"){await pc.setLocalDescription();sig(from,{t:"desc",room,desc:pc.localDescription.toJSON()})}
+    }else if(cand){
+      if(!pc.remoteDescription){st.q.push(cand);return}
+      try{await pc.addIceCandidate(cand)}catch(e){if(!st.ignore)console.warn(e)}
+    }
+  }catch(e){console.warn(e)}
+}
+function addRemote(uid,e){
+  if(!CALL)return;
+  const stream=e.streams[0]||new MediaStream([e.track]);let t=CALL.tiles[stream.id];
+  if(!t){
+    const tile=mk("div","ctile"),v=document.createElement("video");v.autoplay=true;v.playsInline=true;v.srcObject=stream;
+    tile.append(v,mk("span",null,((P[uid]||{}).name||"?")+" — screen"));tile.hidden=true;
+    tile.ondblclick=()=>{if(tile.requestFullscreen)tile.requestFullscreen()};
+    $("clStage").append(tile);t=CALL.tiles[stream.id]={tile,v,uid,stream};
+    stream.onaddtrack=stream.onremovetrack=()=>tileRefresh(t);
+  }
+  const tr=e.track;tr.onmute=tr.onunmute=tr.onended=()=>tileRefresh(t);
+  if(tr.kind==="audio"&&!t.w){t.w=1;watch(uid,new MediaStream([tr]))}
+  v_play(t);tileRefresh(t);
+}
+function v_play(t){t.v.play().catch(()=>{})}
+function tileRefresh(t){
+  const live=t.stream.getVideoTracks().some(x=>x.readyState==="live"&&!x.muted);
+  t.tile.hidden=!live;refreshStage();
+}
+function refreshStage(){
+  if(!CALL)return;const n=Object.values(CALL.tiles).filter(t=>!t.tile.hidden).length;
+  $("call").classList.toggle("big",n>0&&!CALL.mini);$("clMin").hidden=!n;
+}
+function watch(uid,stream){
+  try{
+    if(!actx||!stream.getAudioTracks().length)return;
+    const src=actx.createMediaStreamSource(stream),an=actx.createAnalyser();an.fftSize=256;src.connect(an);
+    const buf=new Uint8Array(an.frequencyBinCount);
+    CALL.mon.push(setInterval(()=>{
+      if(!CALL)return;an.getByteFrequencyData(buf);let a=0;for(const x of buf)a+=x;
+      const el=CALL.av[uid];if(el)el.classList.toggle("talk",a/buf.length>14&&!(uid===me&&CALL.muted));
+    },150));
+  }catch(e){}
+}
+function renderPeople(){
+  if(!CALL)return;const box=$("clPeople");box.textContent="";CALL.av={};
+  [me,...Object.keys(CALL.peers),...CALL.ringing].forEach(u=>{
+    const a=mk("div","av");avatar(a,P[u],u,true);a.title=((P[u]||{}).name||"?")+(CALL.ringing.has(u)?" (ringing)":"");
+    if(CALL.ringing.has(u))a.style.opacity=".4";CALL.av[u]=a;box.append(a);
+  });
+  $("clTitle").textContent=CALL.title||"Call";
+}
+function dropPeer(uid){
+  if(!CALL)return;const st=CALL.peers[uid];if(!st)return;
+  try{st.pc.close()}catch(e){}
+  delete CALL.peers[uid];
+  for(const k in CALL.tiles)if(CALL.tiles[k].uid===uid){CALL.tiles[k].tile.remove();delete CALL.tiles[k]}
+  renderPeople();refreshStage();
+  if(!Object.keys(CALL.peers).length&&!CALL.ringing.size&&CALL.live)endCall("Call ended");
+}
+function endCall(msg){
+  const c=CALL;if(!c)return;CALL=null;
+  clearTimeout(c.ringTimer);clearInterval(c.tick);c.mon.forEach(clearInterval);
+  Object.keys(c.peers).forEach(u=>{sig(u,{t:"bye",room:c.room});try{c.peers[u].pc.close()}catch(e){}});
+  c.ringing.forEach(u=>sig(u,{t:"cancel",room:c.room}));
+  c.local.getTracks().forEach(t=>t.stop());if(c.screen)c.screen.getTracks().forEach(t=>t.stop());
+  $("call").hidden=true;$("call").classList.remove("big");$("clStage").textContent="";$("clPeople").textContent="";
+  if(msg)toast(msg);
+}
+function btnState(){
+  if(!CALL)return;
+  $("clMic").innerHTML=IC(CALL.muted?"micOff":"mic",22);$("clMic").classList.toggle("on",CALL.muted);
+  $("clScr").innerHTML=IC(CALL.screen?"monitorOff":"monitor",22);$("clScr").classList.toggle("on",!!CALL.screen);
+  $("clScr").title=CALL.screen?"Stop sharing":"Share your screen (with audio)";
+}
+async function shareScreen(){
+  if(!CALL)return;
+  if(CALL.screen){stopScreen();return}
+  let st;
+  try{st=await navigator.mediaDevices.getDisplayMedia({video:{frameRate:30},audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}})}
+  catch(e){if(e&&e.name!=="NotAllowedError")toast("Couldn’t start screen sharing.",true);return}
+  if(!CALL){st.getTracks().forEach(t=>t.stop());return}
+  CALL.screen=st;
+  Object.values(CALL.peers).forEach(p=>st.getTracks().forEach(t=>{p.send[t.id]=p.pc.addTrack(t,st)}));
+  st.getVideoTracks()[0].onended=stopScreen;
+  const tile=mk("div","ctile"),v=document.createElement("video");v.muted=true;v.autoplay=true;v.playsInline=true;v.srcObject=st;
+  tile.append(v,mk("span",null,"You — screen"));$("clStage").append(tile);CALL.tiles.self={tile,uid:me,v,stream:st};
+  refreshStage();btnState();
+  if(!st.getAudioTracks().length)toast("Sharing without sound. In the picker, choose a tab and tick “Share tab audio” (or Entire screen + system audio) to include audio.");
+}
+function stopScreen(){
+  if(!CALL||!CALL.screen)return;const st=CALL.screen;CALL.screen=null;
+  Object.values(CALL.peers).forEach(p=>st.getTracks().forEach(t=>{const s=p.send[t.id];if(s){try{p.pc.removeTrack(s)}catch(e){}delete p.send[t.id]}}));
+  st.getTracks().forEach(t=>t.stop());
+  if(CALL.tiles.self){CALL.tiles.self.tile.remove();delete CALL.tiles.self}
+  refreshStage();btnState();
+}
+$("callBtn").onclick=()=>{
+  if(CALL||INC){toast("You’re already in a call.");return}
+  if(!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia)){toast("Calling needs a secure (https) page and a browser with microphone support.",true);return}
+  if(activeG)startCall({kind:"group",gid:activeG});else if(active)startCall({kind:"dm",uid:active});
+};
+$("inYes").onclick=acceptCall;$("inNo").onclick=declineCall;$("clEnd").onclick=()=>endCall();
+$("clMic").onclick=()=>{if(!CALL)return;CALL.muted=!CALL.muted;CALL.local.getAudioTracks().forEach(t=>t.enabled=!CALL.muted);btnState()};
+$("clScr").onclick=shareScreen;
+$("clMin").onclick=()=>{if(CALL){CALL.mini=!CALL.mini;refreshStage()}};
 
 // ---- @mentions ----
 function mentionCheck(){
@@ -1447,7 +1692,7 @@ bellState();
 
 // ---- start ----
 async function start(id){
-  me=id;$("auth").hidden=true;$("app").hidden=false;syncNotif();startPresence();
+  me=id;$("auth").hidden=true;$("app").hidden=false;syncNotif();startPresence();startCalls();
   const{data,error}=await sb.from("profiles").select("*");
   if(error){$("list").textContent="Couldn’t load people.";return}
   P={};data.forEach(p=>P[p.id]=p);renderMe();renderList();loadGroups();startGroupLive();loadFriends();startFriendLive();
